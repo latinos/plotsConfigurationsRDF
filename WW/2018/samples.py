@@ -80,12 +80,12 @@ samples['WpWp_QCD'] = {
     'FilesPerJob': 4
 }
 
-files = nanoGetSampleFiles(mcDirectory, 'WZTo3LNu')
-samples['WZ_QCD'] = {
-    'name': files,
-    'weight': mcCommonWeight,
-    'FilesPerJob': 4
-}
+# files = nanoGetSampleFiles(mcDirectory, 'WZTo3LNu')
+# samples['WZ_QCD'] = {
+#     'name': files,
+#     'weight': mcCommonWeight,
+#     'FilesPerJob': 4
+# }
 
 
 #
@@ -94,12 +94,17 @@ samples['WZ_QCD'] = {
 
 DataRun = [
     ['A','Run2018A-UL2018-v1'],
-    ['B','Run2018B-UL2018-v1'],
-    ['C','Run2018C-UL2018-v1'],
-    ['D','Run2018D-UL2018-v1'],
+    # ['B','Run2018B-UL2018-v1'],
+    # ['C','Run2018C-UL2018-v1'],
+    # ['D','Run2018D-UL2018-v1'],
 ]
 
-DataSets = ['MuonEG','SingleMuon','EGamma','DoubleMuon']
+DataSets = [
+  'MuonEG',
+  # 'SingleMuon',
+  # 'EGamma',
+  # 'DoubleMuon'
+  ]
 
 DataTrig = {
     'MuonEG'         : ' Trigger_ElMu' ,
