@@ -12,7 +12,7 @@ def makeMCDirectory(var=""):
         return "/".join([_treeBaseDir, mcProduction, mcSteps + "__" + var])
 
 
-mcALL     = [skey for skey in samples if skey not in ('DATA', 'Fake_lep')]
+# mcALL     = [skey for skey in samples if skey not in ('DATA', 'Fake_lep')]
 
 
 
@@ -26,8 +26,6 @@ nuisances['lumi_Uncorrelated'] = {
     'type': 'lnN',
     'samples': dict((skey, '1.015') for skey in mcALL if skey not in ['tVx'])
 }
-
-
 
 
 
@@ -58,6 +56,36 @@ nuisances['electronpt'] = {
     'folderUp': makeMCDirectory('ElepTup_suffix'),
     'folderDown': makeMCDirectory('ElepTdo_suffix'),
 }
+
+
+
+# ------------------- muon efficiency and energy scale
+nuisances['eff_m'] = {
+    'name': 'eff_m_2018_UL',
+    'kind': 'weight',
+    'type': 'shape',
+    #                        nominal          up               down
+    'samples': dict((skey, ['SFweightMu','SFweightMuUp', 'SFweightMuDown']) for skey in mcALL)
+}
+
+
+# aliases['SFweightMuUp'] = {
+#     'expr': 'LepSF3l__mu_'+muWP+'__Up',
+#     'samples': mcALL
+# }
+# aliases['SFweightMuDown'] = {
+#     'expr': 'LepSF3l__mu_'+muWP+'__Do',
+#     'samples': mcALL
+# }
+
+
+
+
+
+
+
+
+
 
 
 

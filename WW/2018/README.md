@@ -44,3 +44,8 @@ Readable:
 
     g++ -O2 -Wall -pthread -std=c++17 -m64 -fsized-deallocation -I/usr/include/root scripts_run/SSWW/WpWpJJ_EWK_UL/my_run_analysis_SSWW_WpWpJJ_EWK_UL_24.cpp -o scripts_run/SSWW/WpWpJJ_EWK_UL/my_run_analysis_SSWW_WpWpJJ_EWK_UL_24 -L/usr/lib64/root -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lROOTNTuple -lROOTNTupleUtil -lMultiProc -lROOTDataFrame -Wl,-rpath,/usr/lib64/root -pthread -lm -ldl -rdynamic
 
+
+    g++ -O2 -Wall -pthread -std=c++17 -m64 -fsized-deallocation -I/usr/include/root  scripts_run/SSWW/WpWpJJ_EWK_UL/my_run_analysis_SSWW_WpWpJJ_EWK_UL_3.cpp -o ./scripts_run/SSWW/WpWpJJ_EWK_UL/my_run_analysis_SSWW_WpWpJJ_EWK_UL_3 -L/usr/lib64/root -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lROOTNTuple -lROOTNTupleUtil -lMultiProc -lROOTDataFrame -Wl,-rpath,/usr/lib64/root -pthread -lm -ldl -rdynamic
+
+
+

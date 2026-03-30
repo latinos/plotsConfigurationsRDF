@@ -5,6 +5,8 @@ tag = 'WW'
 # used by mkShape to define output directory for root files
 outputDir = 'rootFile'
 
+# file with list of aliases
+aliasesFile = 'aliases.py'
 
 # file with list of variables
 variablesFile = 'variables.py'

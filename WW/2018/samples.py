@@ -59,7 +59,10 @@ def nanoGetSampleFiles(path, name):
 
 
 
-mcCommonWeight = '3.14'
+# mcCommonWeight = 'baseW * PromptGenLepMatch2l * SFweightMu'
+
+mcCommonWeight = 'baseW * PromptGenLepMatch2l * (mumu ? SFweightMu : 1)'
+
 
 
 #
@@ -146,6 +149,15 @@ for era, era_name in DataRun:
     samples['DATA']['weights'].update( {datatag : DataTrig[pd] })
     # samples['DATA']['weights'].append( [datatag , DataTrig[pd] ])
     # addSampleWeight(samples, 'DATA', datatag, DataTrig[pd])
+
+
+
+#
+# Useful later on, like aliases.py, nuisances.py, ...
+#
+
+mcALL     = [skey for skey in samples if skey not in ('DATA', 'Fake_lep')]
+ALL       = [skey for skey in samples]
 
 
 
