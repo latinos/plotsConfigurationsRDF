@@ -4,5 +4,5 @@
 # Alt(Lepton_pdgId,0,-9999))==13 --> mu
 #
 
-cuts['lowmll']  = 'mll>10 && mll<90'
-cuts['highmll'] = 'mll>100'
+cuts['lowmll']  = 'mll>40 && mll<120'
+cuts['highmll'] = 'mll>120'

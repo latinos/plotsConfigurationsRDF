@@ -61,7 +61,14 @@ def nanoGetSampleFiles(path, name):
 
 # mcCommonWeight = 'baseW * PromptGenLepMatch2l * SFweightMu'
 
-mcCommonWeight = 'baseW * PromptGenLepMatch2l * (mumu ? SFweightMu : 1)'
+# mcCommonWeight        = 'XSWeight*SFweight*METFilter_MC*PromptGenLepMatch2l'
+
+# mcCommonWeight = 'baseW * PromptGenLepMatch2l * (mumu ? SFweightMu : 1)'
+
+mcCommonWeight = 'XSWeight * SFweight * METFilter_MC * PromptGenLepMatch2l * (mumu ? SFweightMu : 1) * (ee ? SFweightEle : 1)'
+
+
+
 
 
 
@@ -73,15 +80,49 @@ files = nanoGetSampleFiles(mcDirectory, 'WpWpJJ_EWK_UL')
 samples['SSWW'] = {
     'name': files,
     'weight': mcCommonWeight,
-    'FilesPerJob': 4
+    'FilesPerJob': 10
 }
 
 files = nanoGetSampleFiles(mcDirectory, 'WpWpJJ_QCD_UL')
 samples['WpWp_QCD'] = {
     'name': files,
     'weight': mcCommonWeight,
-    'FilesPerJob': 4
+    'FilesPerJob': 10
 }
+
+############ Top ############
+
+
+files = nanoGetSampleFiles(mcDirectory, 'TTTo2L2Nu') | \
+        nanoGetSampleFiles(mcDirectory, 'ST_s-channel') | \
+        nanoGetSampleFiles(mcDirectory, 'ST_t-channel_top') | \
+        nanoGetSampleFiles(mcDirectory, 'ST_t-channel_antitop') | \
+        nanoGetSampleFiles(mcDirectory, 'ST_tW_antitop') | \
+        nanoGetSampleFiles(mcDirectory, 'ST_tW_top')
+
+samples['top'] = {
+    'name': files,
+    'weight': mcCommonWeight + " * Top_pTrw ",
+    'FilesPerJob': 10,
+}
+
+
+############ DY ############
+
+files = nanoGetSampleFiles(mcDirectory, 'DYJetsToLL_M-10to50_NLO') | \
+        nanoGetSampleFiles(mcDirectory, 'DYJetsToLL_M-50')
+
+#print (" list of files DY = ", files)
+
+samples['DY'] = {
+    'name': files,
+    'weight': mcCommonWeight,
+    'FilesPerJob': 10,
+}
+
+
+
+
 
 # files = nanoGetSampleFiles(mcDirectory, 'WZTo3LNu')
 # samples['WZ_QCD'] = {
@@ -104,9 +145,9 @@ DataRun = [
 
 DataSets = [
   'MuonEG',
-  # 'SingleMuon',
-  # 'EGamma',
-  # 'DoubleMuon'
+  'SingleMuon',
+  'EGamma',
+  'DoubleMuon'
   ]
 
 DataTrig = {
@@ -121,7 +162,7 @@ samples['DATA'] = {
   'weight': 'LepWPCut*METFilter_DATA',
   'weights': {},
   'isData': ['all'],
-  'FilesPerJob': 50
+  'FilesPerJob': 100
 }
 
 for era, era_name in DataRun:
