@@ -24,6 +24,12 @@ Hadd the root files:
     mkShapes.py  --pycfg=configuration.py --hadd
 
 
+Plot:
+
+    mkPlot.py  --pycfg=configuration.py
+
+
+
 
 Readable:
 
