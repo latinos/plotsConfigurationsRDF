@@ -76,19 +76,19 @@ mcCommonWeight = 'XSWeight * SFweight * METFilter_MC * PromptGenLepMatch2l * (mu
 # The actual list of samples
 #
 
-files = nanoGetSampleFiles(mcDirectory, 'WpWpJJ_EWK_UL')
-samples['SSWW'] = {
-    'name': files,
-    'weight': mcCommonWeight,
-    'FilesPerJob': 10
-}
-
-files = nanoGetSampleFiles(mcDirectory, 'WpWpJJ_QCD_UL')
-samples['WpWp_QCD'] = {
-    'name': files,
-    'weight': mcCommonWeight,
-    'FilesPerJob': 10
-}
+# files = nanoGetSampleFiles(mcDirectory, 'WpWpJJ_EWK_UL')
+# samples['SSWW'] = {
+#     'name': files,
+#     'weight': mcCommonWeight,
+#     'FilesPerJob': 10
+# }
+#
+# files = nanoGetSampleFiles(mcDirectory, 'WpWpJJ_QCD_UL')
+# samples['WpWp_QCD'] = {
+#     'name': files,
+#     'weight': mcCommonWeight,
+#     'FilesPerJob': 10
+# }
 
 ############ Top ############
 
@@ -102,8 +102,9 @@ files = nanoGetSampleFiles(mcDirectory, 'TTTo2L2Nu') | \
 
 samples['top'] = {
     'name': files,
-    'weight': mcCommonWeight + " * Top_pTrw ",
-    'FilesPerJob': 10,
+    'weight': mcCommonWeight,
+    # 'weight': mcCommonWeight + " * Top_pTrw ",
+    'FilesPerJob': 3,
 }
 
 
@@ -117,7 +118,7 @@ files = nanoGetSampleFiles(mcDirectory, 'DYJetsToLL_M-10to50_NLO') | \
 samples['DY'] = {
     'name': files,
     'weight': mcCommonWeight,
-    'FilesPerJob': 10,
+    'FilesPerJob': 5,
 }
 
 
@@ -138,9 +139,9 @@ samples['DY'] = {
 
 DataRun = [
     ['A','Run2018A-UL2018-v1'],
-    # ['B','Run2018B-UL2018-v1'],
-    # ['C','Run2018C-UL2018-v1'],
-    # ['D','Run2018D-UL2018-v1'],
+    ['B','Run2018B-UL2018-v1'],
+    ['C','Run2018C-UL2018-v1'],
+    ['D','Run2018D-UL2018-v1'],
 ]
 
 DataSets = [
@@ -162,7 +163,7 @@ samples['DATA'] = {
   'weight': 'LepWPCut*METFilter_DATA',
   'weights': {},
   'isData': ['all'],
-  'FilesPerJob': 100
+  'FilesPerJob': 10
 }
 
 for era, era_name in DataRun:

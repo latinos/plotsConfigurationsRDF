@@ -51,67 +51,86 @@ palette2 = {
 
 
 
-groupPlot['SSWW']  = {
-    'nameHR':"W^{#pm}W^{#pm} EWK",
+# groupPlot['SSWW']  = {
+#     'nameHR':"W^{#pm}W^{#pm} EWK",
+#     'isSignal':1,
+#     'color': palette2["Swamp"],
+#     'samples':['SSWW'],
+#     'fill': 1001
+# }
+
+# groupPlot['ZZ']  = {
+#     'nameHR':"ZZ",
+#     'isSignal':0,
+#     'color': palette2["lightAzure"],
+#     'samples':['ZZ'],
+#     'fill': 1001
+# }
+
+# groupPlot['WZ_QCD']  = {
+#     'nameHR':"WZ QCD",
+#     'isSignal':0,
+#     'color': palette2["Red"],
+#     'samples':['WZ_QCD'],
+#     'fill': 1001
+# }
+
+# groupPlot['WZ_EWK']  = {
+#     'nameHR':"WZ EWK",
+#     'isSignal':0,
+#     'color': palette2["Swamp"],
+#     'samples':['WZ_EWK'],
+#     'fill': 1001
+# }
+
+# groupPlot['VVV']  = {
+#     'nameHR':'VVV',
+#     'isSignal':0,
+#     'color': palette2["LightGreen"],
+#     'samples':['VVV','VgS1'],
+#     'fill': 1001
+# }
+
+# groupPlot['tVx']  = {
+#     'nameHR':'tVx',
+#     'isSignal':0,
+#     'color': palette2["Violet"],
+#     'samples':['tVx'],
+#     'fill': 1001
+# }
+
+
+# groupPlot['WpWp_QCD']  = {
+#     'nameHR':"W^{#pm}W^{#pm} QCD",
+#     'isSignal':1,
+#     'color': palette2["LightGreen"],
+#     'samples':['WpWp_QCD'],
+#     'fill': 1001
+# }
+
+# groupPlot['non-prompt']  = {
+#     'nameHR':'non-Prompt',
+#     'isSignal':0,
+#     'color': palette2["DeadViolet"],
+#     'samples':['Fake_lep'], #['Fake_lep_me', 'Fake_lep_em'],
+#     'fill': 1001
+# }
+
+groupPlot['DY']  = {
+    'nameHR':'DY',
+    'isSignal':0,
+    # 'color': palette2["DeadViolet"],
+    'color': 418, # kGreen+2
+    'samples':['DY'], #['Fake_lep_me', 'Fake_lep_em'],
+    'fill': 1001
+}
+
+
+groupPlot['top']  = {
+    'nameHR':"top and ttbar",
     'isSignal':0,
     'color': palette2["Yellow"],
-    'samples':['SSWW'],
-    'fill': 1001
-}
-
-groupPlot['ZZ']  = {
-    'nameHR':"ZZ",
-    'isSignal':0,
-    'color': palette2["lightAzure"],
-    'samples':['ZZ'],
-    'fill': 1001
-}
-
-groupPlot['WZ_QCD']  = {
-    'nameHR':"WZ QCD",
-    'isSignal':0,
-    'color': palette2["Red"],
-    'samples':['WZ_QCD'],
-    'fill': 1001
-}
-
-groupPlot['WZ_EWK']  = {
-    'nameHR':"WZ EWK",
-    'isSignal':0,
-    'color': palette2["Swamp"],
-    'samples':['WZ_EWK'],
-    'fill': 1001
-}
-groupPlot['VVV']  = {
-    'nameHR':'VVV',
-    'isSignal':0,
-    'color': palette2["LightGreen"],
-    'samples':['VVV','VgS1'],
-    'fill': 1001
-}
-
-groupPlot['tVx']  = {
-    'nameHR':'tVx',
-    'isSignal':0,
-    'color': palette2["Violet"],
-    'samples':['tVx'],
-    'fill': 1001
-}
-
-
-groupPlot['WpWp_QCD']  = {
-    'nameHR':"W^{#pm}W^{#pm} QCD",
-    'isSignal':0,
-    'color': palette2["LightGreen"],
-    'samples':['WpWp_QCD'],
-    'fill': 1001
-}
-
-groupPlot['non-prompt']  = {
-    'nameHR':'non-Prompt',
-    'isSignal':0,
-    'color': palette2["DeadViolet"],
-    'samples':['Fake_lep'], #['Fake_lep_me', 'Fake_lep_em'],
+    'samples':['top'],
     'fill': 1001
 }
 
