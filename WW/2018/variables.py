@@ -40,4 +40,19 @@ variables['mll']  = {   'name': 'mll',
                         'fold' : 3,
                         }
 
+variables['njet']  = {
+                       'name': 'Sum(CleanJet_pt>30)',
+                       'range' : (8,0,8),
+                       'xaxis' : 'Number of jets',
+                       'fold' : 2   # 0 = not fold (default), 1 = fold underflowbin, 2 = fold overflow bin, 3 = fold underflow and overflow
+                       }
+
+#
+# variables['ptll']  = {   'name': 'ptll',
+#                         'range' : (200,0,500),
+#                         'xaxis' : 'pTll [GeV]',
+#                         'fold' : 3,
+#                         }
+#
+#
 

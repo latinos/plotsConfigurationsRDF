@@ -27,8 +27,7 @@ Hadd the root files:
 Plot:
 
     mkPlot.py  --pycfg=configuration.py
-
-
+    mkPlot.py  --pycfg=configuration.py  --showIntegralLegend 1
 
 
 Readable:

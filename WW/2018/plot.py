@@ -51,71 +51,6 @@ palette2 = {
 
 
 
-# groupPlot['SSWW']  = {
-#     'nameHR':"W^{#pm}W^{#pm} EWK",
-#     'isSignal':1,
-#     'color': palette2["Swamp"],
-#     'samples':['SSWW'],
-#     'fill': 1001
-# }
-
-# groupPlot['ZZ']  = {
-#     'nameHR':"ZZ",
-#     'isSignal':0,
-#     'color': palette2["lightAzure"],
-#     'samples':['ZZ'],
-#     'fill': 1001
-# }
-
-# groupPlot['WZ_QCD']  = {
-#     'nameHR':"WZ QCD",
-#     'isSignal':0,
-#     'color': palette2["Red"],
-#     'samples':['WZ_QCD'],
-#     'fill': 1001
-# }
-
-# groupPlot['WZ_EWK']  = {
-#     'nameHR':"WZ EWK",
-#     'isSignal':0,
-#     'color': palette2["Swamp"],
-#     'samples':['WZ_EWK'],
-#     'fill': 1001
-# }
-
-# groupPlot['VVV']  = {
-#     'nameHR':'VVV',
-#     'isSignal':0,
-#     'color': palette2["LightGreen"],
-#     'samples':['VVV','VgS1'],
-#     'fill': 1001
-# }
-
-# groupPlot['tVx']  = {
-#     'nameHR':'tVx',
-#     'isSignal':0,
-#     'color': palette2["Violet"],
-#     'samples':['tVx'],
-#     'fill': 1001
-# }
-
-
-# groupPlot['WpWp_QCD']  = {
-#     'nameHR':"W^{#pm}W^{#pm} QCD",
-#     'isSignal':1,
-#     'color': palette2["LightGreen"],
-#     'samples':['WpWp_QCD'],
-#     'fill': 1001
-# }
-
-# groupPlot['non-prompt']  = {
-#     'nameHR':'non-Prompt',
-#     'isSignal':0,
-#     'color': palette2["DeadViolet"],
-#     'samples':['Fake_lep'], #['Fake_lep_me', 'Fake_lep_em'],
-#     'fill': 1001
-# }
-
 groupPlot['DY']  = {
     'nameHR':'DY',
     'isSignal':0,
@@ -128,7 +63,7 @@ groupPlot['DY']  = {
 
 groupPlot['top']  = {
     'nameHR':"top and ttbar",
-    'isSignal':0,
+    'isSignal':1,
     'color': palette2["Yellow"],
     'samples':['top'],
     'fill': 1001
@@ -137,68 +72,8 @@ groupPlot['top']  = {
 
 
 # keys here must match keys in samples.py
-##Fake and prompt substraction
 
-plot['Fake_lep']  = {
-    'color':Yellow,
-    'isSignal':0,
-    'isData':0,
-    'scale':1.0
-}
-
-##Signal
-
-plot['SSWW']  = {
-    'color':Azure + 4,
-    'isSignal':0,
-    'isData':0,
-    'scale':1.0
-}
-plot['WpWp_QCD']  = {
-    'color':Violet,
-    'isSignal':0,
-    'isData':0,
-    'scale':1.0
-}
-
-plot['ZZ']  = {
-    'color':Violet + 10,
-    'isSignal':0,
-    'isData':0,
-    'scale':1.0
-}
-
-
-plot['WZ_QCD']  = {
-    'color':Violet + 10,
-    'isSignal':0,
-    'isData':0,
-    'scale':1.0
-} # WZ_QCD WZ_QCD_powheg WZ_QCD_AMCNLO
-
-plot['WZ_EWK']  = {
-    'color':Violet + 10,
-    'isSignal':0,
-    'isData':0,
-    'scale':1.0
-}
-
-
-plot['VVV']  = {
-    'color':Green,
-    'isSignal':0,
-    'isData':0,
-    'scale':1.0
-}
-
-plot['tVx']  = {
-    'color':Green + 10,
-    'isSignal':0,
-    'isData':0,
-    'scale':1.0
-}
-
-plot['Top']  = {
+plot['top']  = {
     'color':Green + 10,
     'isSignal':0,
     'isData':0,
@@ -206,13 +81,6 @@ plot['Top']  = {
 }
 
 plot['DY']  = {
-    'color':Green + 10,
-    'isSignal':0,
-    'isData':0,
-    'scale':1.0
-}
-
-plot['Higgs']  = {
     'color':Green + 10,
     'isSignal':0,
     'isData':0,

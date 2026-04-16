@@ -127,7 +127,8 @@ aliases['Jet_PUIDSF_down'] = {
 aliases['SFweight'] = {
     #'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'LepWPSF','Jet_PUIDSF', 'btagSF', 'LepWPttHMVASF']),
     # 'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'LepWPSF','Jet_PUIDSF', 'btagSF']),
-    'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'Jet_PUIDSF', 'btagSF']),
+    # 'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'Jet_PUIDSF', 'btagSF']),
+    'expr': ' * '.join(['SFweight2l', 'LepWPCut']),
     'samples' : mcALL
 }
 
