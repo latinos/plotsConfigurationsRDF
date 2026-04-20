@@ -30,11 +30,11 @@ aliases['SFweightMu'] = {
     'samples': mcALL
 }
 aliases['SFweightMuUp'] = {
-    'expr': 'LepSF3l__mu_'+muWP+'__Up',
+    'expr': 'LepSF2l__mu_'+muWP+'__Up',
     'samples': mcALL
 }
 aliases['SFweightMuDown'] = {
-    'expr': 'LepSF3l__mu_'+muWP+'__Do',
+    'expr': 'LepSF2l__mu_'+muWP+'__Do',
     'samples': mcALL
 }
 
@@ -56,7 +56,9 @@ aliases['ee'] = {
 
 # -------- lepton WP
 aliases['LepWPCut'] = {
-    'expr': 'LepCut3l__ele_'+eleWP+'__mu_'+muWP ,
+    # 'expr': '1' , # FIXME
+    'expr': 'LepCut2l__ele_'+eleWP+'__mu_'+muWP ,
+    # 'expr': 'LepCut3l__ele_'+eleWP+'__mu_'+muWP ,
     'samples': ALL
 }
 
