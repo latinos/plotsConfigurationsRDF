@@ -10,7 +10,7 @@ Setup:
 Histogram production
 
 
-Prepare the scripts:
+Prepare the scripts and compile them:
 
     mkShapes.py  --pycfg=configuration.py
 
@@ -18,6 +18,10 @@ Submit on batch system:
 
     mkShapes.py  --pycfg=configuration.py --submitBatch
     mkShapes.py  --pycfg=configuration.py --submit
+
+Check if done:
+
+    mkShapes.py  --pycfg=configuration.py --checkBatch
 
 Hadd the root files:
 
@@ -29,6 +33,10 @@ Plot:
     mkPlot.py  --pycfg=configuration.py
     mkPlot.py  --pycfg=configuration.py  --showIntegralLegend 1
 
+
+Datacards:
+
+    mkDatacards.py  --pycfg=configuration.py
 
 Readable:
 
