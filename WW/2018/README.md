@@ -38,6 +38,13 @@ Datacards:
 
     mkDatacards.py  --pycfg=configuration.py
 
+Dump the trees:
+
+    mkSnapshot.py   --pycfg=configuration.py
+    mkSnapshot.py   --pycfg=configuration.py  --submitBatch
+    mkSnapshot.py   --pycfg=configuration.py  --checkBatch
+
+
 Readable:
 
     easyDescription.py --inputFileSamples      samples.py     --outputFileSamples      extended_samples.py
