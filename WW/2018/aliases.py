@@ -137,6 +137,14 @@ aliases['SFweight'] = {
 
 
 
+#
+# external defined variable: c++ code
+#
+# aliases['myVariable'] = {
+#
+# }
+#
+
 
 
 # aliases['luminosity'] = {
