@@ -45,6 +45,12 @@ Dump the trees:
     mkSnapshot.py   --pycfg=configuration.py  --checkBatch
 
 
+FIXME:
+
+    use of Redefine vs Define
+    and SafeDefine
+
+
 Readable:
 
     easyDescription.py --inputFileSamples      samples.py     --outputFileSamples      extended_samples.py

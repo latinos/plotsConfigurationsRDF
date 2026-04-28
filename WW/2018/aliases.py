@@ -145,6 +145,33 @@ aliases['SFweight'] = {
 # }
 #
 
+aliases['myVariableMll'] = {
+  'external' : "code/mymll.c",
+  'variables': ["Lepton_pt[0]", "Lepton_eta[0]", "Lepton_phi[0]", "Lepton_pt[1]", "Lepton_eta[1]", "Lepton_phi[1]"],
+  'function' : 'calculate_mass',
+  'samples': mcALL
+}
+
+
+
+
+#
+#    varied_df = varied_df.Define("my_pt0",  "Lepton_pt[0]" )
+#                         .Define("my_eta0", "Lepton_eta[0]")
+#                         .Define("my_phi0", "Lepton_phi[0]")
+#                         .Define("my_pt1",  "Lepton_pt[1]" )
+#                         .Define("my_eta1", "Lepton_eta[1]")
+#                         .Define("my_phi1", "Lepton_phi[1]");
+#
+#    varied_df = varied_df.Define("mymll", calculate_mass, {"my_pt0", "my_eta0", "my_phi0", "my_pt1", "my_eta1", "my_phi1"});
+#
+
+
+
+
+
+
+
 
 
 # aliases['luminosity'] = {
