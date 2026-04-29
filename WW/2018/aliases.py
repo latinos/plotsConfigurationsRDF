@@ -154,6 +154,33 @@ aliases['myVariableMll'] = {
 
 
 
+#
+# if some variables are not defined but they are needed as inputs of the TMVA, define them!
+#
+
+aliases['ptj1'] = {
+    'expr': 'CleanJet_pt.size() > 0 ? CleanJet_pt[0] : -9999.',
+    'samples' : ALL
+}
+
+aliases['njet'] = {
+    'expr': 'Sum(CleanJet_pt>30)',
+    'samples' : ALL
+}
+
+aliases['myVariableBDT'] = {
+  # 'external' : "code/mytmva.c",
+  'variables': ["pt1", "ptj1", "mll", "njet"],
+  'function' : 'TMVA',
+  'xmlfile'  : 'code/TMVAClassification_BDTG.weights.xml',
+  'samples': ALL
+}
+
+
+
+
+
+
 
 #
 #    varied_df = varied_df.Define("my_pt0",  "Lepton_pt[0]" )

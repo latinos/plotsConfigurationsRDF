@@ -2,6 +2,13 @@
 
 #'fold' : # 0 = not fold (default), 1 = fold underflowbin, 2 = fold overflow bin, 3 = fold underflow and overflow
 
+#
+#
+#
+# NB: if a variable is defined in "aliases.py" it will NOT be overwritten here! Change the name if you want a new definition of a variable!
+#
+#
+
 
 variables['events']  = {   'name': '1',
                            'range' : (1,0,2),
@@ -65,6 +72,18 @@ variables['njet']  = {
                        'xaxis' : 'Number of jets',
                        'fold' : 2   # 0 = not fold (default), 1 = fold underflowbin, 2 = fold overflow bin, 3 = fold underflow and overflow
                        }
+
+
+
+variables['BDT']  =   {
+                        'name': 'myVariableBDT',
+                        'range' : (200,0,1),
+                        'xaxis' : 'my BDT',
+                        'fold' : 3,
+                        }
+
+
+
 
 #
 # variables['ptll']  = {   'name': 'ptll',

@@ -6,7 +6,6 @@ Setup:
     source setup.sh
     source ../../../latinoRDF/setup.sh
 
-
 Histogram production
 
 
@@ -49,6 +48,7 @@ FIXME:
 
     use of Redefine vs Define
     and SafeDefine
+
 
 
 Readable:
