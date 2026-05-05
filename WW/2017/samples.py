@@ -2,6 +2,8 @@
 # Samples file
 #
 
+# import os
+
 #
 # How to get the list of files to be analysed
 #
