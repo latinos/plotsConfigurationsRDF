@@ -11,8 +11,6 @@ cutsFile = "cuts.py"
 # file with list of samples
 samplesFile = "samples.py"
 
-# file with dict of samples for plotting
-# plotFile = 'plot.py'
 
 # structure file for datacard
 structureFile = "structure.py"
@@ -27,13 +25,13 @@ nuisancesFile = "nuisances.py"
 foldersToMerge = {
 
                   "2017UL" : {
-                    "folder" : "../2017UL",
-                    "tag"    : "Hgg2l_2017",
+                    "folder" : "../2017",
+                    "tag"    : "WW",
                    },
 
                   "2018UL" : {
-                    "folder" : "../2018UL",
-                    "tag"    : "WHSS_OSCR_2018_v9_chargeAsymmetry_Mu82_EleUL90",
+                    "folder" : "../2018",
+                    "tag"    : "WW",
                    }
 
                  }
