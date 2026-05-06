@@ -37,9 +37,10 @@ If a lnN is present only in one year, then the nuisance has to be transformed in
 
 ### Plot distributions
 
-    mkPlot.py
-    mkPlot.py --onlyPlot cratio --showIntegralLegend 1 --fileFormats png
-    mkPlot.py --onlyPlot cratio --showIntegralLegend 1 --fileFormats png  --plotNormalizedDistributions
+    mkPlot.py --inputFile histos_ggHgg_full_Run2.root
+
+    mkPlot.py --inputFile histos_ggHgg_full_Run2.root --onlyPlot cratio --showIntegralLegend 1 --fileFormats png
+    mkPlot.py --inputFile histos_ggHgg_full_Run2.root --onlyPlot cratio --showIntegralLegend 1 --fileFormats png  --plotNormalizedDistributions
 
 
 ### make datacards
