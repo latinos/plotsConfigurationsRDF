@@ -61,12 +61,21 @@ nuisances['electronpt'] = {
 
 # ------------------- muon efficiency and energy scale
 nuisances['eff_m'] = {
-    'name': 'eff_m_2018_UL',
+    'name': 'eff_m_2018',
     'kind': 'weight',
     'type': 'shape',
     #                        nominal          up               down
-    'samples': dict((skey, ['SFweightMu','SFweightMuUp', 'SFweightMuDown']) for skey in mcALL)
+    'samples': dict((skey, ['LepWPSF',   'SFweightMuUp', 'SFweightMuDown']) for skey in mcALL)
 }
+
+
+# nuisances['eff_m'] = {
+#     'name': 'eff_m_2018_UL',
+#     'kind': 'weight',
+#     'type': 'shape',
+#     #                        nominal          up               down
+#     'samples': dict((skey, ['SFweightMu','SFweightMuUp', 'SFweightMuDown']) for skey in mcALL)
+# }
 
 
 # aliases['SFweightMuUp'] = {

@@ -17,26 +17,6 @@ aliases['PromptGenLepMatch2l'] = {
 }
 
 
-aliases['SFweightEle'] = {
-    'expr': '1',
-    # 'expr': 'LepSF3l__ele_'+muWP,
-    'samples': mcALL
-}
-
-
-aliases['SFweightMu'] = {
-    'expr': '1',
-    # 'expr': 'LepSF3l__mu_'+muWP,
-    'samples': mcALL
-}
-aliases['SFweightMuUp'] = {
-    'expr': 'LepSF2l__mu_'+muWP+'__Up',
-    'samples': mcALL
-}
-aliases['SFweightMuDown'] = {
-    'expr': 'LepSF2l__mu_'+muWP+'__Do',
-    'samples': mcALL
-}
 
 
 aliases['mumu'] = {
@@ -56,9 +36,7 @@ aliases['ee'] = {
 
 # -------- lepton WP
 aliases['LepWPCut'] = {
-    # 'expr': '1' , # FIXME
     'expr': 'LepCut2l__ele_'+eleWP+'__mu_'+muWP ,
-    # 'expr': 'LepCut3l__ele_'+eleWP+'__mu_'+muWP ,
     'samples': ALL
 }
 
@@ -106,33 +84,85 @@ aliases['btagSF'] = {
 
 # --------------------------- PU weights
 aliases['Jet_PUIDSF'] = {
-  # 'expr' : 'TMath::Exp(ROOT::VecOps::Sum((Jet_jetId>=2)*LogVec(Jet_PUIDSF_loose)))',
   'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose[Jet_jetId>=2])',
   'samples': mcALL
 }
 
 aliases['Jet_PUIDSF_up'] = {
-  # 'expr' : 'TMath::Exp(ROOT::VecOps::Sum((Jet_jetId>=2)*LogVec(Jet_PUIDSF_loose_up)))',
   'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose_up[Jet_jetId>=2])',
   'samples': mcALL
 }
 
 aliases['Jet_PUIDSF_down'] = {
-  # 'expr' : 'TMath::Exp(ROOT::VecOps::Sum((Jet_jetId>=2)*LogVec(Jet_PUIDSF_loose_down)))',
   'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose_down[Jet_jetId>=2])',
   'samples': mcALL
 }
 
 
 
-# data/MC scale factors
-aliases['SFweight'] = {
-    #'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'LepWPSF','Jet_PUIDSF', 'btagSF', 'LepWPttHMVASF']),
-    # 'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'LepWPSF','Jet_PUIDSF', 'btagSF']),
-    # 'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'Jet_PUIDSF', 'btagSF']),
-    'expr': ' * '.join(['SFweight2l', 'LepWPCut']),
-    'samples' : mcALL
+aliases['LepWPSF'] = {
+    'expr': 'LepSF2l__ele_'+eleWP+'__mu_'+muWP,
+    'samples': mcALL
 }
+
+
+# see:
+# https://github.com/latinos/LatinoAnalysis/blob/master/NanoGardener/python/data/formulasToAdd_MC_2018.py
+#
+
+
+# data/MC scale factors
+# aliases['SFweight'] = {
+#     #'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'LepWPSF','Jet_PUIDSF', 'btagSF', 'LepWPttHMVASF']),
+#     # 'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'LepWPSF','Jet_PUIDSF', 'btagSF']),
+#     # 'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'Jet_PUIDSF', 'btagSF']),
+#     # 'expr': ' * '.join(['SFweight2l', 'LepWPCut']),
+#     # 'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'LepWPSF', 'Jet_PUIDSF', 'btagSFbc', 'btagSFlight']),
+#     'expr': ' * '.join(['SFweight2l', 'LepWPCut', 'LepWPSF', 'Jet_PUIDSF', 'btagSF']),
+#     'samples' : mcALL
+# }
+
+
+
+
+# variations
+aliases['SFweightEleUp'] = {
+    'expr': 'LepSF2l__ele_'+eleWP+'__Up',
+    'samples': mcALL
+}
+aliases['SFweightEleDown'] = {
+    'expr': 'LepSF2l__ele_'+eleWP+'__Do',
+    'samples': mcALL
+}
+aliases['SFweightMuUp'] = {
+    'expr': 'LepSF2l__mu_'+muWP+'__Up',
+    'samples': mcALL
+}
+aliases['SFweightMuDown'] = {
+    'expr': 'LepSF2l__mu_'+muWP+'__Do',
+    'samples': mcALL
+}
+
+
+# aliases['SFweightEle'] = {
+#     'expr': '1',
+#     # 'expr': 'LepSF3l__ele_'+muWP,
+#     'samples': mcALL
+# }
+#
+# aliases['SFweightMu'] = {
+#     'expr': '1',
+#     # 'expr': 'LepSF3l__mu_'+muWP,
+#     'samples': mcALL
+# }
+# aliases['SFweightMuUp'] = {
+#     'expr': 'LepSF2l__mu_'+muWP+'__Up',
+#     'samples': mcALL
+# }
+# aliases['SFweightMuDown'] = {
+#     'expr': 'LepSF2l__mu_'+muWP+'__Do',
+#     'samples': mcALL
+# }
 
 
 
