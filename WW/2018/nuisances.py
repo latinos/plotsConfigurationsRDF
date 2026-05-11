@@ -64,8 +64,8 @@ nuisances['eff_m'] = {
     'name': 'eff_m_2018',
     'kind': 'weight',
     'type': 'shape',
-    #                        nominal          up               down
-    'samples': dict((skey, ['LepWPSF',   'SFweightMuUp', 'SFweightMuDown']) for skey in mcALL)
+    #                        nominal          up                     down
+    'samples': dict((skey, ['LepWPSF',   'LepWPSF*SFweightMuUp', 'LepWPSF*SFweightMuDown']) for skey in mcALL)
 }
 
 
