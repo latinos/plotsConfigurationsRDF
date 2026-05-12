@@ -41,16 +41,6 @@ def nanoGetSampleFiles(path, name):
 
 
 
-
-# def addSampleWeight(samples, sampleName, sampleNameType, weight):
-#     obj = list(filter(lambda k: k[0] == sampleNameType, samples[sampleName]['name']))[0]
-#     samples[sampleName]['name'] = list(filter(lambda k: k[0] != sampleNameType, samples[sampleName]['name']))
-#     if len(obj) > 2:
-#         samples[sampleName]['name'].append((obj[0], obj[1], obj[2] + '*(' + weight + ')'))
-#     else:
-#         samples[sampleName]['name'].append((obj[0], obj[1], '(' + weight + ')' ))
-
-
 def addSubSampleWeights(samples, sampleName, subSampleName, weight):
   if 'weights' not in samples[sampleName].keys():
     samples[sampleName]['weights'] = {}
@@ -65,18 +55,7 @@ def addSubSampleWeights(samples, sampleName, subSampleName, weight):
 # The weights
 #
 
-
-
-# mcCommonWeight = 'baseW * PromptGenLepMatch2l * SFweightMu'
-
-# mcCommonWeight        = 'XSWeight*SFweight*METFilter_MC*PromptGenLepMatch2l'
-
-# mcCommonWeight = 'baseW * PromptGenLepMatch2l * (mumu ? SFweightMu : 1)'
-
-# mcCommonWeight = 'XSWeight * SFweight * METFilter_MC * PromptGenLepMatch2l * (mumu ? SFweightMu : 1) * (ee ? SFweightEle : 1)'
-
 # mcCommonWeight = 'XSWeight * SFweight * METFilter_MC * PromptGenLepMatch2l'
-
 mcCommonWeight = 'XSWeight * SFweight2l * LepWPCut * LepWPSF * Jet_PUIDSF * btagSF * METFilter_MC * PromptGenLepMatch2l'
 
 
@@ -86,19 +65,6 @@ mcCommonWeight = 'XSWeight * SFweight2l * LepWPCut * LepWPSF * Jet_PUIDSF * btag
 # The actual list of samples
 #
 
-# files = nanoGetSampleFiles(mcDirectory, 'WpWpJJ_EWK_UL')
-# samples['SSWW'] = {
-#     'name': files,
-#     'weight': mcCommonWeight,
-#     'FilesPerJob': 10
-# }
-#
-# files = nanoGetSampleFiles(mcDirectory, 'WpWpJJ_QCD_UL')
-# samples['WpWp_QCD'] = {
-#     'name': files,
-#     'weight': mcCommonWeight,
-#     'FilesPerJob': 10
-# }
 
 ############ Top ############
 
@@ -113,7 +79,6 @@ files = nanoGetSampleFiles(mcDirectory, 'TTTo2L2Nu') | \
 samples['top'] = {
     'name': files,
     'weight': mcCommonWeight,
-    # 'weight': mcCommonWeight + " * Top_pTrw ",
     'FilesPerJob': 3,
 }
 
@@ -134,16 +99,6 @@ samples['DY'] = {
     'FilesPerJob': 5,
 }
 
-
-
-
-
-# files = nanoGetSampleFiles(mcDirectory, 'WZTo3LNu')
-# samples['WZ_QCD'] = {
-#     'name': files,
-#     'weight': mcCommonWeight,
-#     'FilesPerJob': 4
-# }
 
 
 #
@@ -198,13 +153,9 @@ for era, era_name in DataRun:
     # get the files
     files = nanoGetSampleFiles(dataDirectory, datatag)
     samples['DATA']['name'].update(files)
-    # samples['DATA']['name'].extend(files)
 
     # add the weight that is different pd by pd, to take into account orthogonality of triggers
     samples['DATA']['weights'].update( {datatag : DataTrig[pd] })
-    # samples['DATA']['weights'].append( [datatag , DataTrig[pd] ])
-    # addSampleWeight(samples, 'DATA', datatag, DataTrig[pd])
-
 
 
 #
