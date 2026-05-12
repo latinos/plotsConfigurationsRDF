@@ -26,20 +26,20 @@ variables['ptj1']  = {
 
 
 
-variables['ptj2']  = {
-                           'name': 'CleanJet_pt.size() > 1 ? CleanJet_pt[1] : -9999.',
-                           # 'name': 'Alt(CleanJet_pt,1,-9999.)',
-                           'range' : (15,0.,150),
-                           'xaxis' : 'p_{T} 2nd jet',
-                           'fold'  : 3
-                           }
-variables['ptl1']  = {
-                           'name': 'Lepton_pt.size() > 0 ? Lepton_pt[0] : -9999.',
-                           # 'name': 'Alt(Lepton_pt,0,-9999.)',
-                           'range' : (15,0.,200),
-                           'xaxis' : 'p_{T} 1st jet',
-                           'fold'  : 3
-                           }
+# variables['ptj2']  = {
+#                            'name': 'CleanJet_pt.size() > 1 ? CleanJet_pt[1] : -9999.',
+#                            # 'name': 'Alt(CleanJet_pt,1,-9999.)',
+#                            'range' : (15,0.,150),
+#                            'xaxis' : 'p_{T} 2nd jet',
+#                            'fold'  : 3
+#                            }
+# variables['ptl1']  = {
+#                            'name': 'Lepton_pt.size() > 0 ? Lepton_pt[0] : -9999.',
+#                            # 'name': 'Alt(Lepton_pt,0,-9999.)',
+#                            'range' : (15,0.,200),
+#                            'xaxis' : 'p_{T} 1st jet',
+#                            'fold'  : 3
+#                            }
 
 variables['mll']  = {   'name': 'mll',
                         'range' : (200,10,500),
