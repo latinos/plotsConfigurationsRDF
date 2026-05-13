@@ -97,6 +97,11 @@ samples['DY'] = {
     'name': files,
     'weight': mcCommonWeight,
     'FilesPerJob': 5,
+    'subsamples': {
+      #         definition     specific weight
+      'Low' : ['mll<40',      '1.34'],
+      'High': ['mll>40',      '0.90']
+    }
 }
 
 
