@@ -66,6 +66,26 @@ mcCommonWeight = 'XSWeight * SFweight2l * LepWPCut * LepWPSF * Jet_PUIDSF * btag
 #
 
 
+
+############ DY ############
+
+files = nanoGetSampleFiles(mcDirectory, 'DYJetsToLL_M-10to50_NLO') | \
+        nanoGetSampleFiles(mcDirectory, 'DYJetsToLL_M-50')
+
+#print (" list of files DY = ", files)
+
+samples['DY'] = {
+    'name': files,
+    'weight': mcCommonWeight,
+    'FilesPerJob': 5,
+    'subsamples': {
+      #            definition          specific weight
+      'Low' : { 'cut' : 'mll<40',    'weight' :  '1.34'},
+      'High': { 'cut' : 'mll>40',    'weight' :  '1.00'}
+    }
+}
+
+
 ############ Top ############
 
 
@@ -84,25 +104,6 @@ samples['top'] = {
 
 addSubSampleWeights (samples, 'top', 'TTTo2L2Nu', 'Top_pTrw')
 
-
-
-############ DY ############
-
-files = nanoGetSampleFiles(mcDirectory, 'DYJetsToLL_M-10to50_NLO') | \
-        nanoGetSampleFiles(mcDirectory, 'DYJetsToLL_M-50')
-
-#print (" list of files DY = ", files)
-
-samples['DY'] = {
-    'name': files,
-    'weight': mcCommonWeight,
-    'FilesPerJob': 5,
-    'subsamples': {
-      #         definition     specific weight
-      'Low' : ['mll<40',      '1.34'],
-      'High': ['mll>40',      '0.90']
-    }
-}
 
 
 
