@@ -80,8 +80,8 @@ samples['DY'] = {
     'FilesPerJob': 5,
     'subsamples': {
       #            definition          specific weight
-      'Low' : { 'cut' : 'mll<40',    'weight' :  '1.34'},
-      'High': { 'cut' : 'mll>40',    'weight' :  '1.00'}
+      'Low' : { 'cut' : 'mll<70',    'weight' :  '1.34'},
+      'High': { 'cut' : 'mll>70',    'weight' :  '1.00'}
     }
 }
 
