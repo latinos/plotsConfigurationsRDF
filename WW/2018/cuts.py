@@ -31,17 +31,20 @@ supercut = '  (Lepton_pdgId.size() > 0 ? Lepton_pt[0]: -99) > 25 \
 
 
 
-cuts['lowmll_ee']  = 'mll>40 && mll<120 && ee'
+# cuts['lowmll_ee']  = 'mll>40 && mll<120 && ee'
+#
+# cuts['highmll_ee'] = 'mll>120 && ee'
+#
+# cuts['lowmll_mumu']  = 'mll>40 && mll<120  && mumu'
+#
+# cuts['highmll_mumu'] = 'mll>120 && mumu'
 
-cuts['highmll_ee'] = 'mll>120 && ee'
-
-cuts['lowmll_mumu']  = 'mll>40 && mll<120  && mumu'
-
-cuts['highmll_mumu'] = 'mll>120 && mumu'
+cuts['jets2'] = 'njet==2'
 
 
 
-cuts['DY_cr'] = {
+# cuts['DY_cr'] = {
+cuts['DrellYan_cr'] = {
    'expr': 'mll>70 && mll<120',
     # Define the sub-categorization of sr
    'categories' : {

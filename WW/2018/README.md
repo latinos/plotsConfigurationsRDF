@@ -32,6 +32,13 @@ Plot:
     mkPlot.py  --pycfg=configuration.py
     mkPlot.py  --pycfg=configuration.py  --showIntegralLegend 1
 
+    mkPlot.py  --pycfg=configuration.py  --showIntegralLegend 1 --skipMissingNuisance
+
+    mkPlot.py  --pycfg=configuration.py  --showIntegralLegend 1 --skipMissingNuisance   --plotNormalizedDistributions
+    mkPlot.py  --pycfg=configuration.py  --showIntegralLegend 1 --skipMissingNuisance   --plotNormalizedDistributions  --silentMode
+
+
+
 
 Datacards:
 

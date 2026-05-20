@@ -223,19 +223,26 @@ for jes in jes_systs:
     }
 
 
+
+#
+# If a nuisance has no effect in a given phase space/sample, then the histogram is NOT filled
+# FIXME: how should I handle this?
+#
+#
+#
 ##### MET energy scale
-nuisances['met'] = {
-    'name': 'CMS_scale_met_2018',
-    'skipCMS' : 1,
-    'kind': 'suffix',
-    'type': 'shape',
-    'mapUp': 'METup',
-    'mapDown': 'METdo',
-    'samples': dict((skey, ['1', '1']) for skey in mcALL),
-    'folderUp': makeMCDirectory('METup_suffix'),
-    'folderDown': makeMCDirectory('METdo_suffix'),
-    'AsLnN': '0'
-}
+# nuisances['met'] = {
+#     'name': 'CMS_scale_met_2018',
+#     'skipCMS' : 1,
+#     'kind': 'suffix',
+#     'type': 'shape',
+#     'mapUp': 'METup',
+#     'mapDown': 'METdo',
+#     'samples': dict((skey, ['1', '1']) for skey in mcALL),
+#     'folderUp': makeMCDirectory('METup_suffix'),
+#     'folderDown': makeMCDirectory('METdo_suffix'),
+#     'AsLnN': '0'
+# }
 
 ##### Jet energy resolution
 nuisances['JER'] = {
@@ -320,33 +327,33 @@ variations = ['LHEScaleWeight[0]',
 
 
 
-nuisances['QCDscale_top_2j']  = {
-    'name'  : 'QCDscale_top_2j',
-    'kind'  : 'weight_envelope',
-    'type'  : 'shape',
-    'samples'  : {
-       'top' : variations,
-    }
-}
-
-nuisances['QCDscale_WW_2j']  = {
-    'name'  : 'QCDscale_WW_2j',
-    'kind'  : 'weight_envelope',
-    'type'  : 'shape',
-    'samples'  : {
-       'WWjj_QCD' : variations,
-    }
-}
-
-nuisances['QCDscale_V'] = {
-    'name': 'QCDscale_V',
-    'skipCMS': 1,
-    'kind': 'weight_envelope',
-    'type': 'shape',
-    'samples': {
-       'dytt' : variations,
-    },
-}
+# nuisances['QCDscale_top_2j']  = {
+#     'name'  : 'QCDscale_top_2j',
+#     'kind'  : 'weight_envelope',
+#     'type'  : 'shape',
+#     'samples'  : {
+#        'top' : variations,
+#     }
+# }
+#
+# nuisances['QCDscale_WW_2j']  = {
+#     'name'  : 'QCDscale_WW_2j',
+#     'kind'  : 'weight_envelope',
+#     'type'  : 'shape',
+#     'samples'  : {
+#        'WWjj_QCD' : variations,
+#     }
+# }
+#
+# nuisances['QCDscale_V'] = {
+#     'name': 'QCDscale_V',
+#     'skipCMS': 1,
+#     'kind': 'weight_envelope',
+#     'type': 'shape',
+#     'samples': {
+#        'dytt' : variations,
+#     },
+# }
 
 
 

@@ -77,10 +77,10 @@ files = nanoGetSampleFiles(mcDirectory, 'DYJetsToLL_M-10to50_NLO') | \
 samples['DY'] = {
     'name': files,
     'weight': mcCommonWeight,
-    'FilesPerJob': 5,
+    'FilesPerJob': 3,
     'subsamples': {
       #            definition          specific weight
-      'Low' : { 'cut' : 'mll<70',    'weight' :  '1.34'},
+      'Low' : { 'cut' : 'mll<70',    'weight' :  '1.00'},
       'High': { 'cut' : 'mll>70',    'weight' :  '1.00'}
     }
 }

@@ -51,12 +51,31 @@ palette2 = {
 
 
 
-groupPlot['DY']  = {
-    'nameHR':'DY',
+# groupPlot['DY']  = {
+#     'nameHR':'DY',
+#     'isSignal':0,
+#     # 'color': palette2["DeadViolet"],
+#     'color': 418, # kGreen+2
+#     'samples':['DY'], #['Fake_lep_me', 'Fake_lep_em'],
+#     'fill': 1001
+# }
+
+
+groupPlot['DY_Low']  = {
+    'nameHR':'DY low mll',
     'isSignal':0,
     # 'color': palette2["DeadViolet"],
-    'color': 418, # kGreen+2
-    'samples':['DY'], #['Fake_lep_me', 'Fake_lep_em'],
+    'color': 428, # kGreen+2+10
+    'samples':['DY_Low'], #['Fake_lep_me', 'Fake_lep_em'],
+    'fill': 1001
+}
+
+groupPlot['DY_High']  = {
+    'nameHR':'DY high mll',
+    'isSignal':0,
+    # 'color': palette2["DeadViolet"],
+    'color': 408, # kGreen+2-10
+    'samples':['DY_High'], #['Fake_lep_me', 'Fake_lep_em'],
     'fill': 1001
 }
 
@@ -80,8 +99,22 @@ plot['top']  = {
     'scale':1.0
 }
 
-plot['DY']  = {
-    'color':Green + 10,
+# plot['DY']  = {
+#     'color':Green + 10,
+#     'isSignal':0,
+#     'isData':0,
+#     'scale':1.0
+# }
+
+plot['DY_High']  = {
+    'color':Green + 15,
+    'isSignal':0,
+    'isData':0,
+    'scale':1.0
+}
+
+plot['DY_Low']  = {
+    'color':Green + 5,
     'isSignal':0,
     'isData':0,
     'scale':1.0
