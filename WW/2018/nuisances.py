@@ -260,6 +260,13 @@ nuisances['JER'] = {
 
 
 
+#
+# New JER implementation on the fly!
+#
+#
+
+
+
 
 ##### Pileup
 
