@@ -81,4 +81,38 @@ Readable:
     g++ -O2 -Wall -pthread -std=c++17 -m64 -fsized-deallocation -I/usr/include/root  scripts_run/SSWW/WpWpJJ_EWK_UL/my_run_analysis_SSWW_WpWpJJ_EWK_UL_3.cpp -o ./scripts_run/SSWW/WpWpJJ_EWK_UL/my_run_analysis_SSWW_WpWpJJ_EWK_UL_3 -L/usr/lib64/root -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lROOTNTuple -lROOTNTupleUtil -lMultiProc -lROOTDataFrame -Wl,-rpath,/usr/lib64/root -pthread -lm -ldl -rdynamic
 
 
+    g++ -O2 -Wall -fPIC -pthread -std=c++20 -m64 -fsized-deallocation -I/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/include -Iscripts_run/  scripts_run/DY/DYJetsToLL_M-50/my_run_analysis_DY_DYJetsToLL_M-50_10.cpp -o scripts_run/DY/DYJetsToLL_M-50/my_run_analysis_DY_DYJetsToLL_M-50_10 -Lscripts_run/ -llibrary_utils -L/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lROOTNTuple -lROOTNTupleUtil -lMultiProc -lROOTDataFrame -Wl,-rpath,/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -pthread -lm -ldl -rdynamic -lTMVA -lXMLIO -Wl,-rpath,'$ORIGIN:$ORIGINscripts_run/'
+
+    g++ -O2 -Wall -fPIC -pthread -std=c++20 -m64 -fsized-deallocation -I/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/include -Iscripts_run/  scripts_run/DY/DYJetsToLL_M-50/my_run_analysis_DY_DYJetsToLL_M-50_10.cpp -o scripts_run/DY/DYJetsToLL_M-50/my_run_analysis_DY_DYJetsToLL_M-50_10 -Lscripts_run/ -llibrary_utils -L/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lROOTNTuple -lROOTNTupleUtil -lMultiProc -lROOTDataFrame \
+    -I/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/include \
+    -L/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/lib \
+    -lcorrectionlib \
+    -Wl,-rpath,/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -pthread -lm -ldl -rdynamic -lTMVA -lXMLIO -Wl,-rpath,'$ORIGIN:$ORIGINscripts_run/'
+
+
+
+    g++ -O2 -Wall -fPIC -pthread -std=c++20 -m64 -fsized-deallocation -I/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/include -Iscripts_run/  scripts_run/DY/DYJetsToLL_M-50/my_run_analysis_DY_DYJetsToLL_M-50_10.cpp -o scripts_run/DY/DYJetsToLL_M-50/my_run_analysis_DY_DYJetsToLL_M-50_10 -Lscripts_run/ -llibrary_utils -L/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lROOTNTuple -lROOTNTupleUtil -lMultiProc -lROOTDataFrame \
+    -I/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/include \
+    -L/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/lib \
+    -lcorrectionlib \
+    -Wl,-rpath,/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -pthread -lm -ldl -rdynamic -lTMVA -lXMLIO -Wl,-rpath,'$ORIGIN:$ORIGINscripts_run/'
+
+
+
+
+    g++ -O2 -Wall -fPIC -pthread -std=c++20 -m64 -fsized-deallocation -I/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/include -Iscripts_run/  scripts_run/DY/DYJetsToLL_M-50/my_run_analysis_DY_DYJetsToLL_M-50_10.cpp -o scripts_run/DY/DYJetsToLL_M-50/my_run_analysis_DY_DYJetsToLL_M-50_10 -Lscripts_run/ -llibrary_utils -L/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lROOTNTuple -lROOTNTupleUtil -lMultiProc -lROOTDataFrame \
+    -I/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/include \
+    -L/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/lib \
+    -lcorrectionlib \
+    -Wl,-rpath,/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -pthread -lm -ldl -rdynamic -lTMVA -lXMLIO -Wl,-rpath,'$ORIGIN:/afs/cern.ch/user/a/amassiro/work/Latinos/Framework/RDF/plotsConfigurationsRDF/WW/2018/scripts_run/'
+
+
+
+
+
+
+    rpath_flags = "-Wl,-rpath,'$$ORIGIN:$$ORIGIN/../..'"
+
+
+
 

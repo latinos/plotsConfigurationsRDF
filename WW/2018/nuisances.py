@@ -264,6 +264,20 @@ nuisances['JER'] = {
 # New JER implementation on the fly!
 #
 #
+nuisances['myJER'] = {
+    'name': 'CMS_res_j_2018_fly',
+    'skipCMS' : 1,
+    'kind': 'suffixFly',
+    'type': 'shape',
+    'external' : "code/mymll.c",
+    'variables': ["Lepton_pt[0]", "Lepton_eta[0]", "Lepton_phi[0]", "Lepton_pt[1]", "Lepton_eta[1]", "Lepton_phi[1]"],
+    'function' : 'calculate_mass',
+    'samples': dict((skey, ['1', '1']) for skey in mcALL),
+    'AsLnN': '0'
+}
+
+# /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/2018_UL/jet_jerc.json.gz
+
 
 
 
