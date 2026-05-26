@@ -107,6 +107,10 @@ Readable:
     -Wl,-rpath,/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -pthread -lm -ldl -rdynamic -lTMVA -lXMLIO -Wl,-rpath,'$ORIGIN:/afs/cern.ch/user/a/amassiro/work/Latinos/Framework/RDF/plotsConfigurationsRDF/WW/2018/scripts_run/'
 
 
+    scripts_run/DY/DYJetsToLL_M-50/my_run_analysis_DY_DYJetsToLL_M-50_10
+
+
+
 
 
 
