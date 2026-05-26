@@ -104,7 +104,7 @@ private:
 };
 
 
-auto get_sorting_indices = [](const ROOT::RVecD& pt) {
+auto get_sorting_indices = [](const ROOT::RVecF& pt) {
   auto indices = ROOT::VecOps::Argsort(pt);
   std::reverse(indices.begin(), indices.end()); // Flips to highest pt first
   return indices;
@@ -316,13 +316,13 @@ int main() {
 
 
     // Define lambda wrappers so RDataFrame can cleanly loop them
-    auto jer_nom = [](const ROOT::RVecF& pt, const ROOT::RVecF& eta, const ROOT::RVecF& phi, const ROOT::RVecF& gpt, double rho) {
+    auto jer_nom = [](const ROOT::RVecF& pt, const ROOT::RVecF& eta, const ROOT::RVecF& phi, const ROOT::RVecF& gpt, float rho) {
       return jer.smear(pt, eta, phi, gpt, rho, "nom");
     };
-    auto jer_up = [](const ROOT::RVecF& pt, const ROOT::RVecF& eta, const ROOT::RVecF& phi, const ROOT::RVecF& gpt, double rho) {
+    auto jer_up = [](const ROOT::RVecF& pt, const ROOT::RVecF& eta, const ROOT::RVecF& phi, const ROOT::RVecF& gpt, float rho) {
       return jer.smear(pt, eta, phi, gpt, rho, "up");
     };
-    auto jer_down = [](const ROOT::RVecF& pt, const ROOT::RVecF& eta, const ROOT::RVecF& phi, const ROOT::RVecF& gpt, double rho) {
+    auto jer_down = [](const ROOT::RVecF& pt, const ROOT::RVecF& eta, const ROOT::RVecF& phi, const ROOT::RVecF& gpt, float rho) {
       return jer.smear(pt, eta, phi, gpt, rho, "down");
     };
 
@@ -797,6 +797,9 @@ int main() {
 
 
 
+//
+// myJER
+//
 
     suffix_size = 6;
     for (const auto& branch : varBranches_JERup) {
