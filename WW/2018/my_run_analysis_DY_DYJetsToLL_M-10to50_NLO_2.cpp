@@ -306,18 +306,18 @@ int main() {
     // nominal->AddFriend(friend_JESRelativeSample_2018do, "JESRelativeSample_2018do");
     // auto varBranches_JESRelativeSample_2018up = getBranchNames(friend_JESRelativeSample_2018up);
     // auto varBranches_JESRelativeSample_2018do = getBranchNames(friend_JESRelativeSample_2018do);
-    auto* friend_JERup = new TChain("Events");
-    auto* friend_JERdo = new TChain("Events");
-    friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
-    friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
-    friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
-    friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
-    friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
-    friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
-    nominal->AddFriend(friend_JERup, "JERup");
-    nominal->AddFriend(friend_JERdo, "JERdo");
-    auto varBranches_JERup = getBranchNames(friend_JERup);
-    auto varBranches_JERdo = getBranchNames(friend_JERdo);
+    // auto* friend_JERup = new TChain("Events");
+    // auto* friend_JERdo = new TChain("Events");
+    // friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JERup, "JERup");
+    // nominal->AddFriend(friend_JERdo, "JERdo");
+    // auto varBranches_JERup = getBranchNames(friend_JERup);
+    // auto varBranches_JERdo = getBranchNames(friend_JERdo);
     ROOT::RDataFrame base_df(*nominal);
     auto varied_df = ROOT::RDF::RNode(base_df);
 
@@ -848,19 +848,19 @@ int main() {
     //   "CleanJet_pt",
     //   "ROOT::RVec<ROOT::RVecF>{CleanJet_pt_myJERUp, CleanJet_pt_myJERDown}",
     //   {"up","do"},
-    //   "CMS_my_res_j_2018"
+    //   "CMS_my_res_j_XXXX"
     // );
     // varied_df = varied_df.Vary(
     //   "CleanJet_eta",
     //   "ROOT::RVec<ROOT::RVecF>{CleanJet_eta_myJERUp, CleanJet_eta_myJERDown}",
     //   {"up","do"},
-    //   "CMS_my_res_j_2018"
+    //   "CMS_my_res_j_XXXX"
     // );
     // varied_df = varied_df.Vary(
     //   "CleanJet_phi",
     //   "ROOT::RVec<ROOT::RVecF>{CleanJet_phi_myJERUp, CleanJet_phi_myJERDown}",
     //   {"up","do"},
-    //   "CMS_my_res_j_2018"
+    //   "CMS_my_res_j_XXXX"
     // );
 
     for (int ivariation = 0; ivariation<Nvariation; ivariation++) {
@@ -868,19 +868,19 @@ int main() {
         "CleanJet_pt",
         "ROOT::RVec<ROOT::RVecF>{__" + std::to_string(ivariation) + "CleanJet_pt_myJERUp, __" + std::to_string(ivariation) + "CleanJet_pt_myJERDown}",
         {"up","do"},
-        "__NORM__" + std::to_string(ivariation) + "_CMS_my_res_j_2018"
+        "__NORM__" + std::to_string(ivariation) + "_CMS_my_res_j_XXXX"
       );
       varied_df = varied_df.Vary(
         "CleanJet_eta",
         "ROOT::RVec<ROOT::RVecF>{__" + std::to_string(ivariation) + "CleanJet_eta_myJERUp, __" + std::to_string(ivariation) + "CleanJet_eta_myJERDown}",
         {"up","do"},
-        "__NORM__" + std::to_string(ivariation) + "_CMS_my_res_j_2018"
+        "__NORM__" + std::to_string(ivariation) + "_CMS_my_res_j_XXXX"
       );
       varied_df = varied_df.Vary(
         "CleanJet_phi",
         "ROOT::RVec<ROOT::RVecF>{__" + std::to_string(ivariation) + "CleanJet_phi_myJERUp, __" + std::to_string(ivariation) + "CleanJet_phi_myJERDown}",
         {"up","do"},
-        "__NORM__" + std::to_string(ivariation) + "_CMS_my_res_j_2018"
+        "__NORM__" + std::to_string(ivariation) + "_CMS_my_res_j_XXXX"
       );
     }
 
@@ -1212,6 +1212,7 @@ int main() {
     std::vector<ROOT::RDF::RResultHandle> all_booking_2D;
     // FIXME: can these be merged?
 
+
     for (auto& [cut_label, h_list] : hist_map_1D) {
       for (auto& h : h_list) {
         results_1D_variations.push_back( ROOT::RDF::Experimental::VariationsFor(h) );
@@ -1242,6 +1243,16 @@ int main() {
 
 
     std::cout << "   Done, now save in the final root file" << std::endl;
+
+
+    //
+    // Prepare to average histograms for specific nuisances
+    //
+    //         pattern    nuisance-name
+    std::map<std::string, std::string> map_nuisances_name_for_averaged_histograms;
+    map_nuisances_name_for_averaged_histograms["CMS_my_res_j_XXXX"] = "CMS_res_j_2018_fly";
+
+
 
     //
     // In root file:    <cut>/<variable>/histo_<sample>
@@ -1310,59 +1321,59 @@ int main() {
           if (list_of_variables_fold_1D.at(ivar) != 0) FoldHistogram(histo.get(), list_of_variables_fold_1D.at(ivar));
 
           // check if it's a histogram to be averaged
-          // std::regex pattern("histo_DY_" + "__NORM__[0-9]+_CMS_my_res_j_2018");
+          // std::regex pattern("histo_DY_" + "__NORM__[0-9]+_CMS_my_res_j_XXXX");
 
-          std::string string_pattern_up = "histo_.*__NORM__.*_CMS_my_res_j_2018up";
-          std::string string_pattern_do = "histo_.*__NORM__.*_CMS_my_res_j_2018do";
-          std::regex pattern_up(string_pattern_up);
-          std::regex pattern_do(string_pattern_do);
-          std::cout << " temp_name = " << temp_name << " compared to " << string_pattern_up << " and " << string_pattern_do << std::endl;
-          if (std::regex_search(temp_name, pattern_up) || std::regex_search(temp_name, pattern_do)) {
 
-            std::cout << " found! " << std::endl;
-            std::cout << "     temp_name = " << temp_name << std::endl;
-            std::regex pattern_to_remove("__NORM__[0-9]+_");
-            std::string histo_temp_name = std::regex_replace(temp_name, pattern_to_remove, "");
-            std::cout << "     --> histo_temp_name = " << histo_temp_name << std::endl;
-            histo->SetName(histo_temp_name.c_str());
-            std::cout << " patterns: " << string_pattern_up << " :: " << string_pattern_do << std::endl;
+          bool found_any_nuisances_for_averaged_histograms = false;
+          for (auto const& [string_pattern, nuisance_name] : map_nuisances_name_for_averaged_histograms) {
 
-            if (std::regex_search(temp_name, pattern_up)) {
-              std::cout << " found UP" << std::endl;
-              if (auto it = map_nuisances_average_histogram.find("CMS_my_res_j_2018up"); it != map_nuisances_average_histogram.end()) {
-                it->second.Add(histo.get(), 0.1); // 0.1 = 1/10.
+            std::string string_pattern_up = "histo_.*__NORM__.*_" + string_pattern + "up";
+            std::string string_pattern_do = "histo_.*__NORM__.*_" + string_pattern + "do";
+
+            std::regex pattern_up(string_pattern_up);
+            std::regex pattern_do(string_pattern_do);
+
+            if (std::regex_search(temp_name, pattern_up) || std::regex_search(temp_name, pattern_do)) {
+              std::regex pattern_to_remove("__NORM__[0-9]+_");
+              std::string histo_temp_name = std::regex_replace(temp_name, pattern_to_remove, "");
+              std::regex pattern(string_pattern);
+
+              histo_temp_name = std::regex_replace(histo_temp_name, pattern, nuisance_name); // replace with real nuisance name
+
+              histo->SetName(histo_temp_name.c_str());
+
+              if (std::regex_search(temp_name, pattern_up)) {
+                if (auto it = map_nuisances_average_histogram.find(string_pattern + "up"); it != map_nuisances_average_histogram.end()) {
+                  it->second.Add(histo.get(), 0.333); // 0.333 = 1/3.
+                }
+                else {
+                  map_nuisances_average_histogram[nuisance_name + "up"] = (*histo);
+                  found_any_nuisances_for_averaged_histograms = true;
+                  break; // end loop over map to save time
+                }
               }
               else {
-                map_nuisances_average_histogram["CMS_my_res_j_2018up"] = (*histo);
+                if (auto it = map_nuisances_average_histogram.find(string_pattern + "do"); it != map_nuisances_average_histogram.end()) {
+                  it->second.Add(histo.get(), 0.333); // 0.333 = 1/3.
+                }
+                else {
+                  map_nuisances_average_histogram[nuisance_name + "do"] = (*histo);
+                  found_any_nuisances_for_averaged_histograms = true;
+                  break; // end loop over map to save time
+                }
               }
             }
-            else {
-              std::cout << " found DOWN" << std::endl;
-              if (auto it = map_nuisances_average_histogram.find("CMS_my_res_j_2018do"); it != map_nuisances_average_histogram.end()) {
-                it->second.Add(histo.get(), 0.1); // 0.1 = 1/10.
-              }
-              else {
-                map_nuisances_average_histogram["CMS_my_res_j_2018do"] = (*histo);
-              }
-            }
-
           }
-          else {
-            // if it's NOT a histogram to be averaged, then write it directly
+          // if it's NOT a histogram to be averaged, then write it directly
+          if (not found_any_nuisances_for_averaged_histograms) {
             histo->Write();
           }
-
         }
 
-
-        // ----
-        // now write all the averaged histograms
+        // now write all the averaged histograms, up and down variations
         for (auto const& [name, histo] : map_nuisances_average_histogram) {
           histo.Write();
-          std::cout << "writing: " << name << " --> " << histo.GetName() << std::endl;
         }
-        //----
-
 
       }
       out_file.cd(); // Go back to root for the next directory

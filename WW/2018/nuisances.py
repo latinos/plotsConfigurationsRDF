@@ -270,8 +270,9 @@ nuisances['myJER'] = {
     'kind': 'suffixFly',
     'type': 'shape',
     'external' : "code/jer_on_the_fly.c",
-    'variables': ["Lepton_pt[0]", "Lepton_eta[0]", "Lepton_phi[0]", "Lepton_pt[1]", "Lepton_eta[1]", "Lepton_phi[1]"],
-    'function' : 'calculate_mass',
+    'code_in_main' : "code/jer_on_the_fly_main.c",
+    'pattern' : 'CMS_my_res_j_XXXX',
+    'numVariations' : 3,
     'samples': dict((skey, ['1', '1']) for skey in mcALL),
     'AsLnN': '0'
 }
