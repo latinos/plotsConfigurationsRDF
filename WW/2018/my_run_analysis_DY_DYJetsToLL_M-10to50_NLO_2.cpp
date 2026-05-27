@@ -19,6 +19,7 @@
 #include <string>
 #include <typeinfo>
 
+#include <regex>
 
 #include "TMVA/RReader.hxx"
 #include "TMVA/RInferenceUtils.hxx"
@@ -33,6 +34,89 @@ float calculate_mass(float pt1, float eta1, float phi1, float pt2, float eta2, f
 }
 
 
+//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------------------
+
+#include "correction.h"
+// --- JER Evaluator Helper Class ---
+class JERSmearer {
+public:
+  JERSmearer(const std::string& jsonPath, const std::string& algo) {
+    // Load the centralized JERC correction set
+    auto cset = correction::CorrectionSet::from_file(jsonPath);
+
+    // Use the official CMS 2018 UL JER keys
+    std::string jer_tag = "Summer19UL18_JRV2_MC";
+
+    cl_res = cset->at(jer_tag + "_PtResolution_" + algo); // e.g. Summer19UL18_JRV2_MC_PtResolution_AK4PFchs
+    cl_sf  = cset->at(jer_tag + "_ScaleFactor_"  + algo); // e.g. Summer19UL18_JRV2_MC_ScaleFactor_AK4PFchs
+
+  }
+
+  // Hybrid Smearing Method
+  ROOT::RVecF smear(const ROOT::RVecF& jet_pt,
+                    const ROOT::RVecF& jet_eta,
+                    const ROOT::RVecF& jet_phi,
+                    const ROOT::RVecF& gen_pt,
+                    double rho,
+                    const std::string& systematic,
+                    int seed
+                    ) {
+
+    ROOT::RVecF smeared_pt;
+    smeared_pt.reserve(jet_pt.size());
+
+    for (size_t i = 0; i < jet_pt.size(); ++i) {
+      float pt = jet_pt[i];
+      float eta = jet_eta[i];
+
+      // 1. Get the resolution (sigma_MC)
+      float sigma_mc = cl_res->evaluate({eta, pt, rho});
+
+      // 2. Get the Scale Factor (nominal, up, or down)
+      float sf = cl_sf->evaluate({eta, systematic});
+
+      float smear_factor = 1.0;
+
+      // 3. Apply Hybrid Smearing (Gen-matching vs Stochastic)
+      if (i < gen_pt.size() && gen_pt[i] > 0) {
+        // Gen-matched method
+        float dpt = pt - gen_pt[i];
+        if (std::abs(dpt) < 3.0 * sigma_mc * pt) {
+          smear_factor = 1.0 + (sf - 1.0) * dpt / pt;
+        }
+      } else {
+        //
+        // https://github.com/latinos/mkShapesRDF/blob/master/mkShapesRDF/processor/modules/JMECalculator.py#L208
+        // f"(run<<20) + (luminosityBlock<<10) + event + 1 + int(Jet_eta.size()>0 ? Jet_eta[0]/.01 : 0)"
+        //
+        // Stochastic/Data-saving method (using a dummy deterministic hash for reproducible results per event)
+        // float pseudo_random = std::sin(jet_phi[i] * 1000.0 ) * std::cos(pt);
+        float pseudo_random = std::sin(jet_phi[i] * (1000.0 + seed) ) * std::cos(pt);
+        if (sf > 1.0) {
+          smear_factor = 1.0 + pseudo_random * sigma_mc * std::sqrt(sf * sf - 1.0);
+        }
+      }
+
+      // Guard against negative/unphysical values
+      smeared_pt.push_back(std::max(float(0.0), pt * smear_factor));
+    }
+    return smeared_pt;
+                    }
+
+private:
+  std::shared_ptr<const correction::Correction> cl_res;
+  std::shared_ptr<const correction::Correction> cl_sf;
+};
+
+
+auto get_sorting_indices = [](const ROOT::RVecF& pt) {
+  auto indices = ROOT::VecOps::Argsort(pt);
+  std::reverse(indices.begin(), indices.end()); // Flips to highest pt first
+  return indices;
+};
 
 
 
@@ -45,187 +129,261 @@ float calculate_mass(float pt1, float eta1, float phi1, float pt2, float eta2, f
 int main() {
     ROOT::EnableImplicitMT();
 
+
+    // Path to your JSON on CVMFS
+    std::string json_path = "/cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/2018_UL/jet_jerc.json.gz";
+    std::string jet_algo  = "AK4PFchs";
+
+    // Initialize our helper
+    static JERSmearer jer(json_path, jet_algo);
+
+
     // --- Automatically generated input root files ---
 
     //  Nominal input files
     auto* nominal = new TChain("Events");
-    nominal->Add("root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    nominal->Add("root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    nominal->Add("root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
+    nominal->Add("root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // nominal->Add("root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // nominal->Add("root://eoscms.cern.ch//eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9/nanoLatino_DYJetsToLL_M-50__part32.root");
     
     auto nominalBranches = getBranchNames(nominal);
     
+
 //  Variations input files (if any)
-    auto* friend_ElepTup = new TChain("Events");
-    auto* friend_ElepTdo = new TChain("Events");
-    friend_ElepTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_ElepTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_ElepTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_ElepTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_ElepTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_ElepTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_ElepTup, "ElepTup");
-    nominal->AddFriend(friend_ElepTdo, "ElepTdo");
-    auto varBranches_ElepTup = getBranchNames(friend_ElepTup);
-    auto varBranches_ElepTdo = getBranchNames(friend_ElepTdo);
-    auto* friend_MupTup = new TChain("Events");
-    auto* friend_MupTdo = new TChain("Events");
-    friend_MupTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_MupTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_MupTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_MupTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_MupTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_MupTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_MupTup, "MupTup");
-    nominal->AddFriend(friend_MupTdo, "MupTdo");
-    auto varBranches_MupTup = getBranchNames(friend_MupTup);
-    auto varBranches_MupTdo = getBranchNames(friend_MupTdo);
-    auto* friend_JESAbsoluteup = new TChain("Events");
-    auto* friend_JESAbsolutedo = new TChain("Events");
-    friend_JESAbsoluteup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESAbsolutedo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESAbsoluteup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESAbsolutedo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESAbsoluteup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESAbsolutedo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESAbsoluteup, "JESAbsoluteup");
-    nominal->AddFriend(friend_JESAbsolutedo, "JESAbsolutedo");
-    auto varBranches_JESAbsoluteup = getBranchNames(friend_JESAbsoluteup);
-    auto varBranches_JESAbsolutedo = getBranchNames(friend_JESAbsolutedo);
-    auto* friend_JESAbsolute_2018up = new TChain("Events");
-    auto* friend_JESAbsolute_2018do = new TChain("Events");
-    friend_JESAbsolute_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESAbsolute_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESAbsolute_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESAbsolute_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESAbsolute_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESAbsolute_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESAbsolute_2018up, "JESAbsolute_2018up");
-    nominal->AddFriend(friend_JESAbsolute_2018do, "JESAbsolute_2018do");
-    auto varBranches_JESAbsolute_2018up = getBranchNames(friend_JESAbsolute_2018up);
-    auto varBranches_JESAbsolute_2018do = getBranchNames(friend_JESAbsolute_2018do);
-    auto* friend_JESBBEC1up = new TChain("Events");
-    auto* friend_JESBBEC1do = new TChain("Events");
-    friend_JESBBEC1up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESBBEC1do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESBBEC1up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESBBEC1do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESBBEC1up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESBBEC1do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESBBEC1up, "JESBBEC1up");
-    nominal->AddFriend(friend_JESBBEC1do, "JESBBEC1do");
-    auto varBranches_JESBBEC1up = getBranchNames(friend_JESBBEC1up);
-    auto varBranches_JESBBEC1do = getBranchNames(friend_JESBBEC1do);
-    auto* friend_JESBBEC1_2018up = new TChain("Events");
-    auto* friend_JESBBEC1_2018do = new TChain("Events");
-    friend_JESBBEC1_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESBBEC1_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESBBEC1_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESBBEC1_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESBBEC1_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESBBEC1_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESBBEC1_2018up, "JESBBEC1_2018up");
-    nominal->AddFriend(friend_JESBBEC1_2018do, "JESBBEC1_2018do");
-    auto varBranches_JESBBEC1_2018up = getBranchNames(friend_JESBBEC1_2018up);
-    auto varBranches_JESBBEC1_2018do = getBranchNames(friend_JESBBEC1_2018do);
-    auto* friend_JESEC2up = new TChain("Events");
-    auto* friend_JESEC2do = new TChain("Events");
-    friend_JESEC2up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESEC2do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESEC2up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESEC2do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESEC2up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESEC2do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESEC2up, "JESEC2up");
-    nominal->AddFriend(friend_JESEC2do, "JESEC2do");
-    auto varBranches_JESEC2up = getBranchNames(friend_JESEC2up);
-    auto varBranches_JESEC2do = getBranchNames(friend_JESEC2do);
-    auto* friend_JESEC2_2018up = new TChain("Events");
-    auto* friend_JESEC2_2018do = new TChain("Events");
-    friend_JESEC2_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESEC2_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESEC2_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESEC2_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESEC2_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESEC2_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESEC2_2018up, "JESEC2_2018up");
-    nominal->AddFriend(friend_JESEC2_2018do, "JESEC2_2018do");
-    auto varBranches_JESEC2_2018up = getBranchNames(friend_JESEC2_2018up);
-    auto varBranches_JESEC2_2018do = getBranchNames(friend_JESEC2_2018do);
-    auto* friend_JESFlavorQCDup = new TChain("Events");
-    auto* friend_JESFlavorQCDdo = new TChain("Events");
-    friend_JESFlavorQCDup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESFlavorQCDdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESFlavorQCDup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESFlavorQCDdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESFlavorQCDup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESFlavorQCDdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESFlavorQCDup, "JESFlavorQCDup");
-    nominal->AddFriend(friend_JESFlavorQCDdo, "JESFlavorQCDdo");
-    auto varBranches_JESFlavorQCDup = getBranchNames(friend_JESFlavorQCDup);
-    auto varBranches_JESFlavorQCDdo = getBranchNames(friend_JESFlavorQCDdo);
-    auto* friend_JESHFup = new TChain("Events");
-    auto* friend_JESHFdo = new TChain("Events");
-    friend_JESHFup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESHFdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESHFup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESHFdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESHFup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESHFdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESHFup, "JESHFup");
-    nominal->AddFriend(friend_JESHFdo, "JESHFdo");
-    auto varBranches_JESHFup = getBranchNames(friend_JESHFup);
-    auto varBranches_JESHFdo = getBranchNames(friend_JESHFdo);
-    auto* friend_JESHF_2018up = new TChain("Events");
-    auto* friend_JESHF_2018do = new TChain("Events");
-    friend_JESHF_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESHF_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESHF_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESHF_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESHF_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESHF_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESHF_2018up, "JESHF_2018up");
-    nominal->AddFriend(friend_JESHF_2018do, "JESHF_2018do");
-    auto varBranches_JESHF_2018up = getBranchNames(friend_JESHF_2018up);
-    auto varBranches_JESHF_2018do = getBranchNames(friend_JESHF_2018do);
-    auto* friend_JESRelativeBalup = new TChain("Events");
-    auto* friend_JESRelativeBaldo = new TChain("Events");
-    friend_JESRelativeBalup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESRelativeBaldo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESRelativeBalup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESRelativeBaldo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESRelativeBalup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESRelativeBaldo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESRelativeBalup, "JESRelativeBalup");
-    nominal->AddFriend(friend_JESRelativeBaldo, "JESRelativeBaldo");
-    auto varBranches_JESRelativeBalup = getBranchNames(friend_JESRelativeBalup);
-    auto varBranches_JESRelativeBaldo = getBranchNames(friend_JESRelativeBaldo);
-    auto* friend_JESRelativeSample_2018up = new TChain("Events");
-    auto* friend_JESRelativeSample_2018do = new TChain("Events");
-    friend_JESRelativeSample_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESRelativeSample_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JESRelativeSample_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESRelativeSample_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JESRelativeSample_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JESRelativeSample_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    nominal->AddFriend(friend_JESRelativeSample_2018up, "JESRelativeSample_2018up");
-    nominal->AddFriend(friend_JESRelativeSample_2018do, "JESRelativeSample_2018do");
-    auto varBranches_JESRelativeSample_2018up = getBranchNames(friend_JESRelativeSample_2018up);
-    auto varBranches_JESRelativeSample_2018do = getBranchNames(friend_JESRelativeSample_2018do);
+    // auto* friend_ElepTup = new TChain("Events");
+    // auto* friend_ElepTdo = new TChain("Events");
+    // friend_ElepTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_ElepTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_ElepTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_ElepTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_ElepTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_ElepTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__ElepTdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_ElepTup, "ElepTup");
+    // nominal->AddFriend(friend_ElepTdo, "ElepTdo");
+    // auto varBranches_ElepTup = getBranchNames(friend_ElepTup);
+    // auto varBranches_ElepTdo = getBranchNames(friend_ElepTdo);
+    // auto* friend_MupTup = new TChain("Events");
+    // auto* friend_MupTdo = new TChain("Events");
+    // friend_MupTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_MupTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_MupTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_MupTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_MupTup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_MupTdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__MupTdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_MupTup, "MupTup");
+    // nominal->AddFriend(friend_MupTdo, "MupTdo");
+    // auto varBranches_MupTup = getBranchNames(friend_MupTup);
+    // auto varBranches_MupTdo = getBranchNames(friend_MupTdo);
+    // auto* friend_JESAbsoluteup = new TChain("Events");
+    // auto* friend_JESAbsolutedo = new TChain("Events");
+    // friend_JESAbsoluteup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESAbsolutedo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESAbsoluteup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESAbsolutedo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESAbsoluteup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESAbsolutedo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESAbsoluteup, "JESAbsoluteup");
+    // nominal->AddFriend(friend_JESAbsolutedo, "JESAbsolutedo");
+    // auto varBranches_JESAbsoluteup = getBranchNames(friend_JESAbsoluteup);
+    // auto varBranches_JESAbsolutedo = getBranchNames(friend_JESAbsolutedo);
+    // auto* friend_JESAbsolute_2018up = new TChain("Events");
+    // auto* friend_JESAbsolute_2018do = new TChain("Events");
+    // friend_JESAbsolute_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESAbsolute_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESAbsolute_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESAbsolute_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESAbsolute_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESAbsolute_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESAbsolute_2018up, "JESAbsolute_2018up");
+    // nominal->AddFriend(friend_JESAbsolute_2018do, "JESAbsolute_2018do");
+    // auto varBranches_JESAbsolute_2018up = getBranchNames(friend_JESAbsolute_2018up);
+    // auto varBranches_JESAbsolute_2018do = getBranchNames(friend_JESAbsolute_2018do);
+    // auto* friend_JESBBEC1up = new TChain("Events");
+    // auto* friend_JESBBEC1do = new TChain("Events");
+    // friend_JESBBEC1up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESBBEC1do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESBBEC1up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESBBEC1do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESBBEC1up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESBBEC1do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESBBEC1up, "JESBBEC1up");
+    // nominal->AddFriend(friend_JESBBEC1do, "JESBBEC1do");
+    // auto varBranches_JESBBEC1up = getBranchNames(friend_JESBBEC1up);
+    // auto varBranches_JESBBEC1do = getBranchNames(friend_JESBBEC1do);
+    // auto* friend_JESBBEC1_2018up = new TChain("Events");
+    // auto* friend_JESBBEC1_2018do = new TChain("Events");
+    // friend_JESBBEC1_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESBBEC1_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESBBEC1_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESBBEC1_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESBBEC1_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESBBEC1_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESBBEC1_2018up, "JESBBEC1_2018up");
+    // nominal->AddFriend(friend_JESBBEC1_2018do, "JESBBEC1_2018do");
+    // auto varBranches_JESBBEC1_2018up = getBranchNames(friend_JESBBEC1_2018up);
+    // auto varBranches_JESBBEC1_2018do = getBranchNames(friend_JESBBEC1_2018do);
+    // auto* friend_JESEC2up = new TChain("Events");
+    // auto* friend_JESEC2do = new TChain("Events");
+    // friend_JESEC2up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESEC2do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESEC2up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESEC2do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESEC2up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESEC2do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESEC2up, "JESEC2up");
+    // nominal->AddFriend(friend_JESEC2do, "JESEC2do");
+    // auto varBranches_JESEC2up = getBranchNames(friend_JESEC2up);
+    // auto varBranches_JESEC2do = getBranchNames(friend_JESEC2do);
+    // auto* friend_JESEC2_2018up = new TChain("Events");
+    // auto* friend_JESEC2_2018do = new TChain("Events");
+    // friend_JESEC2_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESEC2_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESEC2_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESEC2_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESEC2_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESEC2_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESEC2_2018up, "JESEC2_2018up");
+    // nominal->AddFriend(friend_JESEC2_2018do, "JESEC2_2018do");
+    // auto varBranches_JESEC2_2018up = getBranchNames(friend_JESEC2_2018up);
+    // auto varBranches_JESEC2_2018do = getBranchNames(friend_JESEC2_2018do);
+    // auto* friend_JESFlavorQCDup = new TChain("Events");
+    // auto* friend_JESFlavorQCDdo = new TChain("Events");
+    // friend_JESFlavorQCDup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESFlavorQCDdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESFlavorQCDup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESFlavorQCDdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESFlavorQCDup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESFlavorQCDdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESFlavorQCDup, "JESFlavorQCDup");
+    // nominal->AddFriend(friend_JESFlavorQCDdo, "JESFlavorQCDdo");
+    // auto varBranches_JESFlavorQCDup = getBranchNames(friend_JESFlavorQCDup);
+    // auto varBranches_JESFlavorQCDdo = getBranchNames(friend_JESFlavorQCDdo);
+    // auto* friend_JESHFup = new TChain("Events");
+    // auto* friend_JESHFdo = new TChain("Events");
+    // friend_JESHFup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESHFdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESHFup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESHFdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESHFup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESHFdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESHFup, "JESHFup");
+    // nominal->AddFriend(friend_JESHFdo, "JESHFdo");
+    // auto varBranches_JESHFup = getBranchNames(friend_JESHFup);
+    // auto varBranches_JESHFdo = getBranchNames(friend_JESHFdo);
+    // auto* friend_JESHF_2018up = new TChain("Events");
+    // auto* friend_JESHF_2018do = new TChain("Events");
+    // friend_JESHF_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESHF_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESHF_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESHF_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESHF_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESHF_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESHF_2018up, "JESHF_2018up");
+    // nominal->AddFriend(friend_JESHF_2018do, "JESHF_2018do");
+    // auto varBranches_JESHF_2018up = getBranchNames(friend_JESHF_2018up);
+    // auto varBranches_JESHF_2018do = getBranchNames(friend_JESHF_2018do);
+    // auto* friend_JESRelativeBalup = new TChain("Events");
+    // auto* friend_JESRelativeBaldo = new TChain("Events");
+    // friend_JESRelativeBalup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESRelativeBaldo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESRelativeBalup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESRelativeBaldo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESRelativeBalup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESRelativeBaldo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESRelativeBalup, "JESRelativeBalup");
+    // nominal->AddFriend(friend_JESRelativeBaldo, "JESRelativeBaldo");
+    // auto varBranches_JESRelativeBalup = getBranchNames(friend_JESRelativeBalup);
+    // auto varBranches_JESRelativeBaldo = getBranchNames(friend_JESRelativeBaldo);
+    // auto* friend_JESRelativeSample_2018up = new TChain("Events");
+    // auto* friend_JESRelativeSample_2018do = new TChain("Events");
+    // friend_JESRelativeSample_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESRelativeSample_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    // friend_JESRelativeSample_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESRelativeSample_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    // friend_JESRelativeSample_2018up->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // friend_JESRelativeSample_2018do->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__RDF__JESdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    // nominal->AddFriend(friend_JESRelativeSample_2018up, "JESRelativeSample_2018up");
+    // nominal->AddFriend(friend_JESRelativeSample_2018do, "JESRelativeSample_2018do");
+    // auto varBranches_JESRelativeSample_2018up = getBranchNames(friend_JESRelativeSample_2018up);
+    // auto varBranches_JESRelativeSample_2018do = getBranchNames(friend_JESRelativeSample_2018do);
     auto* friend_JERup = new TChain("Events");
     auto* friend_JERdo = new TChain("Events");
-    friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part0.root");
-    friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part1.root");
-    friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
-    friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-10to50_NLO__part2.root");
+    friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-50__part30.root");
+    friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-50__part31.root");
+    friend_JERup->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERup_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
+    friend_JERdo->Add("/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano/Summer20UL18_106x_nAODv9_Full2018v9/MCl1loose2018v9__MCCorr2018v9NoJERInHorn__l2tightOR2018v9__JERdo_suffix/nanoLatino_DYJetsToLL_M-50__part32.root");
     nominal->AddFriend(friend_JERup, "JERup");
     nominal->AddFriend(friend_JERdo, "JERdo");
     auto varBranches_JERup = getBranchNames(friend_JERup);
     auto varBranches_JERdo = getBranchNames(friend_JERdo);
     ROOT::RDataFrame base_df(*nominal);
     auto varied_df = ROOT::RDF::RNode(base_df);
+
+
+
+    // Define lambda wrappers so RDataFrame can cleanly loop them
+    auto jer_nom = [](const ROOT::RVecF& pt, const ROOT::RVecF& eta, const ROOT::RVecF& phi, const ROOT::RVecF& gpt, float rho, int seed) {
+      return jer.smear(pt, eta, phi, gpt, rho, "nom", seed);
+    };
+    auto jer_up = [](const ROOT::RVecF& pt, const ROOT::RVecF& eta, const ROOT::RVecF& phi, const ROOT::RVecF& gpt, float rho, int seed) {
+      return jer.smear(pt, eta, phi, gpt, rho, "up", seed);
+    };
+    auto jer_down = [](const ROOT::RVecF& pt, const ROOT::RVecF& eta, const ROOT::RVecF& phi, const ROOT::RVecF& gpt, float rho, int seed) {
+      return jer.smear(pt, eta, phi, gpt, rho, "down", seed);
+    };
+
+
+
+    // varied_df = varied_df.Define("temp_Jet_pt_JERNom",   jer_nom,  {"CleanJet_pt", "CleanJet_eta", "CleanJet_phi", "GenJet_pt", "fixedGridRhoFastjetAll"})
+    // .Define("temp_Jet_pt_myJERUp",    jer_up,   {"CleanJet_pt", "CleanJet_eta", "CleanJet_phi", "GenJet_pt", "fixedGridRhoFastjetAll"})
+    // .Define("temp_Jet_pt_myJERDown",  jer_down, {"CleanJet_pt", "CleanJet_eta", "CleanJet_phi", "GenJet_pt", "fixedGridRhoFastjetAll"});
+    //
+    // varied_df = varied_df
+    //      .Define("temp_idx_Up", get_sorting_indices, {"temp_Jet_pt_myJERUp"})
+    //      .Define("CleanJet_pt_myJERUp",  "ROOT::VecOps::Take(temp_Jet_pt_myJERUp, temp_idx_Up)")
+    //      .Define("CleanJet_eta_myJERUp", "ROOT::VecOps::Take(CleanJet_eta, temp_idx_Up)")
+    //      .Define("CleanJet_phi_myJERUp", "ROOT::VecOps::Take(CleanJet_phi, temp_idx_Up)")
+    //      .Define("CleanJet_jetIdx_myJERUp", "ROOT::VecOps::Take(CleanJet_jetIdx, temp_idx_Up)")
+    //
+    //      .Define("temp_idx_Down", get_sorting_indices, {"temp_Jet_pt_myJERDown"})
+    //      .Define("CleanJet_pt_myJERDown",  "ROOT::VecOps::Take(temp_Jet_pt_myJERDown, temp_idx_Down)")
+    //      .Define("CleanJet_eta_myJERDown", "ROOT::VecOps::Take(CleanJet_eta, temp_idx_Down)")
+    //      .Define("CleanJet_phi_myJERDown", "ROOT::VecOps::Take(CleanJet_phi, temp_idx_Down)")
+    //      .Define("CleanJet_jetIdx_myJERDown", "ROOT::VecOps::Take(CleanJet_jetIdx, temp_idx_Down)");
+
+
+    //
+    // run it 100 times ...
+    //
+
+    int Nvariation = 3;
+
+    for (int ivariation = 0; ivariation<Nvariation; ivariation++) {
+      std::string ivariation_col_name = "ivariation_val_" + std::to_string(ivariation);
+
+      varied_df = varied_df
+            .Define(ivariation_col_name, [ivariation]() { return ivariation; })
+            .Define("__" + std::to_string(ivariation) + "_NORM_temp_Jet_pt_JERNom",    jer_nom,  {"CleanJet_pt", "CleanJet_eta", "CleanJet_phi", "GenJet_pt", "fixedGridRhoFastjetAll", ivariation_col_name})
+            .Define("__" + std::to_string(ivariation) + "_NORM_temp_Jet_pt_myJERUp",    jer_up,   {"CleanJet_pt", "CleanJet_eta", "CleanJet_phi", "GenJet_pt", "fixedGridRhoFastjetAll", ivariation_col_name})
+            .Define("__" + std::to_string(ivariation) + "_NORM_temp_Jet_pt_myJERDown",  jer_down, {"CleanJet_pt", "CleanJet_eta", "CleanJet_phi", "GenJet_pt", "fixedGridRhoFastjetAll", ivariation_col_name});
+
+      varied_df = varied_df
+                           .Define("__" + std::to_string(ivariation) + "_temp_idx_Up", get_sorting_indices, {"__" + std::to_string(ivariation) + "_NORM_temp_Jet_pt_myJERUp"})
+                           .Define("__" + std::to_string(ivariation) + "CleanJet_pt_myJERUp",  "ROOT::VecOps::Take(__" + std::to_string(ivariation) + "_NORM_temp_Jet_pt_myJERUp, __" +  std::to_string(ivariation) + "_temp_idx_Up)")
+                           .Define("__" + std::to_string(ivariation) + "CleanJet_eta_myJERUp", "ROOT::VecOps::Take(CleanJet_eta, __" + std::to_string(ivariation) + "_temp_idx_Up)")
+                           .Define("__" + std::to_string(ivariation) + "CleanJet_phi_myJERUp", "ROOT::VecOps::Take(CleanJet_phi, __" + std::to_string(ivariation) + "_temp_idx_Up)")
+                           .Define("__" + std::to_string(ivariation) + "CleanJet_jetIdx_myJERUp", "ROOT::VecOps::Take(CleanJet_jetIdx, __" + std::to_string(ivariation) + "_temp_idx_Up)")
+
+                           .Define("__" + std::to_string(ivariation) + "_temp_idx_Down", get_sorting_indices, {"__" + std::to_string(ivariation) + "_NORM_temp_Jet_pt_myJERDown"})
+                           .Define("__" + std::to_string(ivariation) + "CleanJet_pt_myJERDown",  "ROOT::VecOps::Take(__" + std::to_string(ivariation) + "_NORM_temp_Jet_pt_myJERDown, __" +  std::to_string(ivariation) + "_temp_idx_Down)")
+                           .Define("__" + std::to_string(ivariation) + "CleanJet_eta_myJERDown", "ROOT::VecOps::Take(CleanJet_eta, __" + std::to_string(ivariation) + "_temp_idx_Down)")
+                           .Define("__" + std::to_string(ivariation) + "CleanJet_phi_myJERDown", "ROOT::VecOps::Take(CleanJet_phi, __" + std::to_string(ivariation) + "_temp_idx_Down)")
+                           .Define("__" + std::to_string(ivariation) + "CleanJet_jetIdx_myJERDown", "ROOT::VecOps::Take(CleanJet_jetIdx, __" + std::to_string(ivariation) + "_temp_idx_Down)");
+    }
+
+
 
 
     // ----------------------------------------
@@ -241,440 +399,523 @@ int main() {
     
     int suffix_size = 0;
     suffix_size = 8;
-    for (const auto& branch : varBranches_ElepTup) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "ElepTup") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "scale_e_2018_UL"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 8;
-    for (const auto& branch : varBranches_ElepTdo) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "ElepTdo") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "scale_e_2018_UL"
-                                    );
-        };
-      };
-    };
-    suffix_size = 7;
-    for (const auto& branch : varBranches_MupTup) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "MupTup") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_m_2018"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 7;
-    for (const auto& branch : varBranches_MupTdo) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "MupTdo") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_m_2018"
-                                    );
-        };
-      };
-    };
-    suffix_size = 14;
-    for (const auto& branch : varBranches_JESAbsoluteup) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESAbsoluteup") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESAbsolute"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 14;
-    for (const auto& branch : varBranches_JESAbsolutedo) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESAbsolutedo") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESAbsolute"
-                                    );
-        };
-      };
-    };
-    suffix_size = 19;
-    for (const auto& branch : varBranches_JESAbsolute_2018up) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESAbsolute_2018up") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESAbsolute_2018"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 19;
-    for (const auto& branch : varBranches_JESAbsolute_2018do) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESAbsolute_2018do") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESAbsolute_2018"
-                                    );
-        };
-      };
-    };
-    suffix_size = 11;
-    for (const auto& branch : varBranches_JESBBEC1up) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESBBEC1up") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESBBEC1"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 11;
-    for (const auto& branch : varBranches_JESBBEC1do) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESBBEC1do") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESBBEC1"
-                                    );
-        };
-      };
-    };
-    suffix_size = 16;
-    for (const auto& branch : varBranches_JESBBEC1_2018up) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESBBEC1_2018up") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESBBEC1_2018"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 16;
-    for (const auto& branch : varBranches_JESBBEC1_2018do) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESBBEC1_2018do") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESBBEC1_2018"
-                                    );
-        };
-      };
-    };
-    suffix_size = 9;
-    for (const auto& branch : varBranches_JESEC2up) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESEC2up") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESEC2"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 9;
-    for (const auto& branch : varBranches_JESEC2do) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESEC2do") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESEC2"
-                                    );
-        };
-      };
-    };
-    suffix_size = 14;
-    for (const auto& branch : varBranches_JESEC2_2018up) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESEC2_2018up") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESEC2_2018"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 14;
-    for (const auto& branch : varBranches_JESEC2_2018do) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESEC2_2018do") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESEC2_2018"
-                                    );
-        };
-      };
-    };
-    suffix_size = 15;
-    for (const auto& branch : varBranches_JESFlavorQCDup) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESFlavorQCDup") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESFlavorQCD"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 15;
-    for (const auto& branch : varBranches_JESFlavorQCDdo) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESFlavorQCDdo") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESFlavorQCD"
-                                    );
-        };
-      };
-    };
-    suffix_size = 8;
-    for (const auto& branch : varBranches_JESHFup) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESHFup") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESHF"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 8;
-    for (const auto& branch : varBranches_JESHFdo) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESHFdo") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESHF"
-                                    );
-        };
-      };
-    };
-    suffix_size = 13;
-    for (const auto& branch : varBranches_JESHF_2018up) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESHF_2018up") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESHF_2018"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 13;
-    for (const auto& branch : varBranches_JESHF_2018do) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESHF_2018do") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESHF_2018"
-                                    );
-        };
-      };
-    };
-    suffix_size = 17;
-    for (const auto& branch : varBranches_JESRelativeBalup) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESRelativeBalup") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESRelativeBal"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 17;
-    for (const auto& branch : varBranches_JESRelativeBaldo) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESRelativeBaldo") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESRelativeBal"
-                                    );
-        };
-      };
-    };
-    suffix_size = 25;
-    for (const auto& branch : varBranches_JESRelativeSample_2018up) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESRelativeSample_2018up") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_scale_JESRelativeSample_2018"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 25;
-    for (const auto& branch : varBranches_JESRelativeSample_2018do) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESRelativeSample_2018do") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_scale_JESRelativeSample_2018"
-                                    );
-        };
-      };
-    };
-    suffix_size = 6;
-    for (const auto& branch : varBranches_JERup) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JERup") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"up"},
-                                    "CMS_res_j_2018"
-                                    );
-        };
-      };
-    };
-    
-    suffix_size = 6;
-    for (const auto& branch : varBranches_JERdo) {
-      if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JERdo") == 0 ) {
-        std::string nomCol = branch.substr(0, branch.size() - suffix_size);
-        if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
-          std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
-          varied_df = varied_df.Vary(
-                                    nomCol,
-                                    expression,
-                                    {"do"},
-                                    "CMS_res_j_2018"
-                                    );
-        };
-      };
-    };
+//     for (const auto& branch : varBranches_ElepTup) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "ElepTup") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "scale_e_2018_UL"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 8;
+//     for (const auto& branch : varBranches_ElepTdo) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "ElepTdo") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "scale_e_2018_UL"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 7;
+//     for (const auto& branch : varBranches_MupTup) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "MupTup") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_m_2018"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 7;
+//     for (const auto& branch : varBranches_MupTdo) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "MupTdo") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_m_2018"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 14;
+//     for (const auto& branch : varBranches_JESAbsoluteup) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESAbsoluteup") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESAbsolute"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 14;
+//     for (const auto& branch : varBranches_JESAbsolutedo) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESAbsolutedo") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESAbsolute"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 19;
+//     for (const auto& branch : varBranches_JESAbsolute_2018up) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESAbsolute_2018up") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESAbsolute_2018"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 19;
+//     for (const auto& branch : varBranches_JESAbsolute_2018do) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESAbsolute_2018do") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESAbsolute_2018"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 11;
+//     for (const auto& branch : varBranches_JESBBEC1up) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESBBEC1up") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESBBEC1"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 11;
+//     for (const auto& branch : varBranches_JESBBEC1do) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESBBEC1do") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESBBEC1"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 16;
+//     for (const auto& branch : varBranches_JESBBEC1_2018up) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESBBEC1_2018up") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESBBEC1_2018"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 16;
+//     for (const auto& branch : varBranches_JESBBEC1_2018do) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESBBEC1_2018do") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESBBEC1_2018"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 9;
+//     for (const auto& branch : varBranches_JESEC2up) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESEC2up") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESEC2"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 9;
+//     for (const auto& branch : varBranches_JESEC2do) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESEC2do") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESEC2"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 14;
+//     for (const auto& branch : varBranches_JESEC2_2018up) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESEC2_2018up") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESEC2_2018"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 14;
+//     for (const auto& branch : varBranches_JESEC2_2018do) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESEC2_2018do") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESEC2_2018"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 15;
+//     for (const auto& branch : varBranches_JESFlavorQCDup) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESFlavorQCDup") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESFlavorQCD"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 15;
+//     for (const auto& branch : varBranches_JESFlavorQCDdo) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESFlavorQCDdo") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESFlavorQCD"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 8;
+//     for (const auto& branch : varBranches_JESHFup) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESHFup") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESHF"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 8;
+//     for (const auto& branch : varBranches_JESHFdo) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESHFdo") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESHF"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 13;
+//     for (const auto& branch : varBranches_JESHF_2018up) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESHF_2018up") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESHF_2018"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 13;
+//     for (const auto& branch : varBranches_JESHF_2018do) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESHF_2018do") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESHF_2018"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 17;
+//     for (const auto& branch : varBranches_JESRelativeBalup) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESRelativeBalup") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESRelativeBal"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 17;
+//     for (const auto& branch : varBranches_JESRelativeBaldo) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESRelativeBaldo") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESRelativeBal"
+//                                     );
+//         };
+//       };
+//     };
+//     suffix_size = 25;
+//     for (const auto& branch : varBranches_JESRelativeSample_2018up) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESRelativeSample_2018up") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_scale_JESRelativeSample_2018"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 25;
+//     for (const auto& branch : varBranches_JESRelativeSample_2018do) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JESRelativeSample_2018do") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_scale_JESRelativeSample_2018"
+//                                     );
+//         };
+//       };
+//     };
 
+//     suffix_size = 6;
+//     for (const auto& branch : varBranches_JERup) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JERup") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"up"},
+//                                     "CMS_res_j_2018"
+//                                     );
+//         };
+//       };
+//     };
+//
+//     suffix_size = 6;
+//     for (const auto& branch : varBranches_JERdo) {
+//       if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "JERdo") == 0 ) {
+//         std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+//         if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+//           std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+//           varied_df = varied_df.Vary(
+//                                     nomCol,
+//                                     expression,
+//                                     {"do"},
+//                                     "CMS_res_j_2018"
+//                                     );
+//         };
+//       };
+//     };
+
+
+
+//
+// myJER
+//
+
+    suffix_size = 4;
+    std::cout << "suffix_size = " << suffix_size << std::endl;
+
+
+    // varied_df = varied_df.Vary(
+    //   "CleanJet_pt",
+    //   "ROOT::RVec<ROOT::RVecF>{CleanJet_pt_myJERUp, CleanJet_pt_myJERDown}",
+    //   {"up","do"},
+    //   "CMS_my_res_j_2018"
+    // );
+    // varied_df = varied_df.Vary(
+    //   "CleanJet_eta",
+    //   "ROOT::RVec<ROOT::RVecF>{CleanJet_eta_myJERUp, CleanJet_eta_myJERDown}",
+    //   {"up","do"},
+    //   "CMS_my_res_j_2018"
+    // );
+    // varied_df = varied_df.Vary(
+    //   "CleanJet_phi",
+    //   "ROOT::RVec<ROOT::RVecF>{CleanJet_phi_myJERUp, CleanJet_phi_myJERDown}",
+    //   {"up","do"},
+    //   "CMS_my_res_j_2018"
+    // );
+
+    for (int ivariation = 0; ivariation<Nvariation; ivariation++) {
+      varied_df = varied_df.Vary(
+        "CleanJet_pt",
+        "ROOT::RVec<ROOT::RVecF>{__" + std::to_string(ivariation) + "CleanJet_pt_myJERUp, __" + std::to_string(ivariation) + "CleanJet_pt_myJERDown}",
+        {"up","do"},
+        "__NORM__" + std::to_string(ivariation) + "_CMS_my_res_j_2018"
+      );
+      varied_df = varied_df.Vary(
+        "CleanJet_eta",
+        "ROOT::RVec<ROOT::RVecF>{__" + std::to_string(ivariation) + "CleanJet_eta_myJERUp, __" + std::to_string(ivariation) + "CleanJet_eta_myJERDown}",
+        {"up","do"},
+        "__NORM__" + std::to_string(ivariation) + "_CMS_my_res_j_2018"
+      );
+      varied_df = varied_df.Vary(
+        "CleanJet_phi",
+        "ROOT::RVec<ROOT::RVecF>{__" + std::to_string(ivariation) + "CleanJet_phi_myJERUp, __" + std::to_string(ivariation) + "CleanJet_phi_myJERDown}",
+        {"up","do"},
+        "__NORM__" + std::to_string(ivariation) + "_CMS_my_res_j_2018"
+      );
+    }
+
+    // suffix_size = 6;
+    // for (const auto& branch : varBranches_JERup) {
+    //   if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "myJERup") == 0 ) {
+    //     std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+    //     std::cout << " nomCol = " << nomCol << std::endl;
+    //     if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+    //       std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+    //       varied_df = varied_df.Vary(
+    //         nomCol,
+    //         expression,
+    //         {"up"},
+    //         "CMS_res_j_2018"
+    //       );
+    //     };
+    //   };
+    // };
+    //
+    // suffix_size = 6;
+    // for (const auto& branch : varBranches_JERdo) {
+    //   if (int(branch.size()) >= (suffix_size-1) && branch.compare(branch.size() - (suffix_size-1), (suffix_size-1), "myJERdo") == 0 ) {
+    //     std::string nomCol = branch.substr(0, branch.size() - suffix_size);
+    //     if (std::find(nominalBranches.begin(), nominalBranches.end(), nomCol) != nominalBranches.end()) {
+    //       std::string expression = "ROOT::RVec<" + varied_df.GetColumnType(nomCol) + ">{static_cast<" + varied_df.GetColumnType(nomCol) + ">(" + branch + ")}";
+    //       varied_df = varied_df.Vary(
+    //         nomCol,
+    //         expression,
+    //         {"do"},
+    //         "CMS_res_j_2018"
+    //       );
+    //     };
+    //   };
+    // };
 
     // --- Automatically generated define aliases ---
 
@@ -748,36 +989,36 @@ int main() {
       {"up", "do"},
       "CMS_eff_hwwtrigger_2018"
       );
-    varied_df = varied_df.Vary(
-      "my_sample_weight",
-      "ROOT::RVecD{(my_sample_weight) * SFweightEleUp,(my_sample_weight) * SFweightEleDown}",
-      {"up", "do"},
-      "CMS_eff_e_2018"
-      );
-    varied_df = varied_df.Vary(
-      "my_sample_weight",
-      "ROOT::RVecD{(XSWeight * SFweight2l * LepWPCut * LepWPSF*SFweightMuUp * Jet_PUIDSF * btagSF * METFilter_MC * PromptGenLepMatch2l) * 59.83,(XSWeight * SFweight2l * LepWPCut * LepWPSF*SFweightMuDown * Jet_PUIDSF * btagSF * METFilter_MC * PromptGenLepMatch2l) * 59.83}",
-      {"up", "do"},
-      "eff_m_2018"
-      );
-    varied_df = varied_df.Vary(
-      "my_sample_weight",
-      "ROOT::RVecD{(my_sample_weight) * Jet_PUIDSF_up/Jet_PUIDSF,(my_sample_weight) * Jet_PUIDSF_down/Jet_PUIDSF}",
-      {"up", "do"},
-      "CMS_PUID_2018"
-      );
-    varied_df = varied_df.Vary(
-      "my_sample_weight",
-      "ROOT::RVecD{(my_sample_weight) * PSWeight[2],(my_sample_weight) * PSWeight[0]}",
-      {"up", "do"},
-      "ps_isr"
-      );
-    varied_df = varied_df.Vary(
-      "my_sample_weight",
-      "ROOT::RVecD{(my_sample_weight) * PSWeight[3],(my_sample_weight) * PSWeight[1]}",
-      {"up", "do"},
-      "ps_fsr"
-      );
+    // varied_df = varied_df.Vary(
+    //   "my_sample_weight",
+    //   "ROOT::RVecD{(my_sample_weight) * SFweightEleUp,(my_sample_weight) * SFweightEleDown}",
+    //   {"up", "do"},
+    //   "CMS_eff_e_2018"
+    //   );
+    // varied_df = varied_df.Vary(
+    //   "my_sample_weight",
+    //   "ROOT::RVecD{(XSWeight * SFweight2l * LepWPCut * LepWPSF*SFweightMuUp * Jet_PUIDSF * btagSF * METFilter_MC * PromptGenLepMatch2l) * 59.83,(XSWeight * SFweight2l * LepWPCut * LepWPSF*SFweightMuDown * Jet_PUIDSF * btagSF * METFilter_MC * PromptGenLepMatch2l) * 59.83}",
+    //   {"up", "do"},
+    //   "eff_m_2018"
+    //   );
+    // varied_df = varied_df.Vary(
+    //   "my_sample_weight",
+    //   "ROOT::RVecD{(my_sample_weight) * Jet_PUIDSF_up/Jet_PUIDSF,(my_sample_weight) * Jet_PUIDSF_down/Jet_PUIDSF}",
+    //   {"up", "do"},
+    //   "CMS_PUID_2018"
+    //   );
+    // varied_df = varied_df.Vary(
+    //   "my_sample_weight",
+    //   "ROOT::RVecD{(my_sample_weight) * PSWeight[2],(my_sample_weight) * PSWeight[0]}",
+    //   {"up", "do"},
+    //   "ps_isr"
+    //   );
+    // varied_df = varied_df.Vary(
+    //   "my_sample_weight",
+    //   "ROOT::RVecD{(my_sample_weight) * PSWeight[3],(my_sample_weight) * PSWeight[1]}",
+    //   {"up", "do"},
+    //   "ps_fsr"
+    //   );
 
 
     // ----------------------------------------
@@ -807,7 +1048,7 @@ int main() {
     current_node = current_node.Filter("  (Lepton_pdgId.size() > 0 ? Lepton_pt[0]: -99) > 25            && (Lepton_pdgId.size() > 1 ? Lepton_pt[1]: -99) > 10            && abs(Lepton_pdgId.size() > 0 ? Lepton_eta[0]: -99) < 2.5            && abs(Lepton_pdgId.size() > 1 ? Lepton_eta[1]: -99) < 2.5 ", "supercut");
     auto node_jets2 = current_node.Filter("njet==2", "jets2");
     ROOT::RDF::RNode node_jets2___DY_Low = node_jets2.Filter("mll<70", "cut_DY_Low");
-    node_jets2___DY_Low = SafeDefine(node_jets2___DY_Low, "my_sample_weight_DY_Low", "(my_sample_weight)*1.00");
+    node_jets2___DY_Low = SafeDefine(node_jets2___DY_Low, "my_sample_weight_DY_Low", "(my_sample_weight)*1.34");
     ROOT::RDF::RNode node_jets2___DY_High = node_jets2.Filter("mll>70", "cut_DY_High");
     node_jets2___DY_High = SafeDefine(node_jets2___DY_High, "my_sample_weight_DY_High", "(my_sample_weight)*1.00");
     hist_map_1D["jets2"].push_back(node_jets2.Histo1D<float>({"h_events", "events", 1, 0, 2}, "events", "my_sample_weight"));
@@ -839,7 +1080,7 @@ int main() {
     hist_map_1D["jets2___DY_High"].push_back(node_jets2___DY_High.Histo1D<float>({"h_BDT", "BDT", 200, 0, 1}, "BDT", "my_sample_weight_DY_High"));
     auto node_DrellYan_cr = current_node.Filter("(mll>70 && mll<120)", "DrellYan_cr");
     ROOT::RDF::RNode node_DrellYan_cr___DY_Low = node_DrellYan_cr.Filter("mll<70", "cut_DY_Low");
-    node_DrellYan_cr___DY_Low = SafeDefine(node_DrellYan_cr___DY_Low, "my_sample_weight_DY_Low", "(my_sample_weight)*1.00");
+    node_DrellYan_cr___DY_Low = SafeDefine(node_DrellYan_cr___DY_Low, "my_sample_weight_DY_Low", "(my_sample_weight)*1.34");
     ROOT::RDF::RNode node_DrellYan_cr___DY_High = node_DrellYan_cr.Filter("mll>70", "cut_DY_High");
     node_DrellYan_cr___DY_High = SafeDefine(node_DrellYan_cr___DY_High, "my_sample_weight_DY_High", "(my_sample_weight)*1.00");
     hist_map_1D["DrellYan_cr"].push_back(node_DrellYan_cr.Histo1D<float>({"h_events", "events", 1, 0, 2}, "events", "my_sample_weight"));
@@ -871,7 +1112,7 @@ int main() {
     hist_map_1D["DrellYan_cr___DY_High"].push_back(node_DrellYan_cr___DY_High.Histo1D<float>({"h_BDT", "BDT", 200, 0, 1}, "BDT", "my_sample_weight_DY_High"));
     auto node_DrellYan_cr_eleele = node_DrellYan_cr.Filter("(ee)", "DrellYan_cr_eleele");
     ROOT::RDF::RNode node_DrellYan_cr_eleele___DY_Low = node_DrellYan_cr_eleele.Filter("mll<70", "cut_DY_Low");
-    node_DrellYan_cr_eleele___DY_Low = SafeDefine(node_DrellYan_cr_eleele___DY_Low, "my_sample_weight_DY_Low", "(my_sample_weight)*1.00");
+    node_DrellYan_cr_eleele___DY_Low = SafeDefine(node_DrellYan_cr_eleele___DY_Low, "my_sample_weight_DY_Low", "(my_sample_weight)*1.34");
     ROOT::RDF::RNode node_DrellYan_cr_eleele___DY_High = node_DrellYan_cr_eleele.Filter("mll>70", "cut_DY_High");
     node_DrellYan_cr_eleele___DY_High = SafeDefine(node_DrellYan_cr_eleele___DY_High, "my_sample_weight_DY_High", "(my_sample_weight)*1.00");
     hist_map_1D["DrellYan_cr_eleele"].push_back(node_DrellYan_cr_eleele.Histo1D<float>({"h_events", "events", 1, 0, 2}, "events", "my_sample_weight"));
@@ -903,7 +1144,7 @@ int main() {
     hist_map_1D["DrellYan_cr_eleele___DY_High"].push_back(node_DrellYan_cr_eleele___DY_High.Histo1D<float>({"h_BDT", "BDT", 200, 0, 1}, "BDT", "my_sample_weight_DY_High"));
     auto node_DrellYan_cr_mumu = node_DrellYan_cr.Filter("(mumu)", "DrellYan_cr_mumu");
     ROOT::RDF::RNode node_DrellYan_cr_mumu___DY_Low = node_DrellYan_cr_mumu.Filter("mll<70", "cut_DY_Low");
-    node_DrellYan_cr_mumu___DY_Low = SafeDefine(node_DrellYan_cr_mumu___DY_Low, "my_sample_weight_DY_Low", "(my_sample_weight)*1.00");
+    node_DrellYan_cr_mumu___DY_Low = SafeDefine(node_DrellYan_cr_mumu___DY_Low, "my_sample_weight_DY_Low", "(my_sample_weight)*1.34");
     ROOT::RDF::RNode node_DrellYan_cr_mumu___DY_High = node_DrellYan_cr_mumu.Filter("mll>70", "cut_DY_High");
     node_DrellYan_cr_mumu___DY_High = SafeDefine(node_DrellYan_cr_mumu___DY_High, "my_sample_weight_DY_High", "(my_sample_weight)*1.00");
     hist_map_1D["DrellYan_cr_mumu"].push_back(node_DrellYan_cr_mumu.Histo1D<float>({"h_events", "events", 1, 0, 2}, "events", "my_sample_weight"));
@@ -1006,7 +1247,7 @@ int main() {
     // In root file:    <cut>/<variable>/histo_<sample>
     //
 
-    TFile out_file("rootFile/root_file___DY_DYJetsToLL_M-10to50_NLO_0.root", "RECREATE");
+    TFile out_file("rootFile/root_file___DY_DYJetsToLL_M-50_10.root", "RECREATE");
     int big_loop = 0;
     for (auto& [cut_label, h_list] : hist_map_1D) {
 
@@ -1044,6 +1285,8 @@ int main() {
         auto all_histos = results_1D_variations.at(big_loop);
         big_loop++;
 
+        std::map<std::string, TH1D> map_nuisances_average_histogram;
+
         for (auto& [name, histo] : all_histos) {
           std::string temp_name;
           if (name == "nominal") {
@@ -1066,9 +1309,61 @@ int main() {
 
           if (list_of_variables_fold_1D.at(ivar) != 0) FoldHistogram(histo.get(), list_of_variables_fold_1D.at(ivar));
 
-          histo->Write();
+          // check if it's a histogram to be averaged
+          // std::regex pattern("histo_DY_" + "__NORM__[0-9]+_CMS_my_res_j_2018");
+
+          std::string string_pattern_up = "histo_.*__NORM__.*_CMS_my_res_j_2018up";
+          std::string string_pattern_do = "histo_.*__NORM__.*_CMS_my_res_j_2018do";
+          std::regex pattern_up(string_pattern_up);
+          std::regex pattern_do(string_pattern_do);
+          std::cout << " temp_name = " << temp_name << " compared to " << string_pattern_up << " and " << string_pattern_do << std::endl;
+          if (std::regex_search(temp_name, pattern_up) || std::regex_search(temp_name, pattern_do)) {
+
+            std::cout << " found! " << std::endl;
+            std::cout << "     temp_name = " << temp_name << std::endl;
+            std::regex pattern_to_remove("__NORM__[0-9]+_");
+            std::string histo_temp_name = std::regex_replace(temp_name, pattern_to_remove, "");
+            std::cout << "     --> histo_temp_name = " << histo_temp_name << std::endl;
+            histo->SetName(histo_temp_name.c_str());
+            std::cout << " patterns: " << string_pattern_up << " :: " << string_pattern_do << std::endl;
+
+            if (std::regex_search(temp_name, pattern_up)) {
+              std::cout << " found UP" << std::endl;
+              if (auto it = map_nuisances_average_histogram.find("CMS_my_res_j_2018up"); it != map_nuisances_average_histogram.end()) {
+                it->second.Add(histo.get(), 0.1); // 0.1 = 1/10.
+              }
+              else {
+                map_nuisances_average_histogram["CMS_my_res_j_2018up"] = (*histo);
+              }
+            }
+            else {
+              std::cout << " found DOWN" << std::endl;
+              if (auto it = map_nuisances_average_histogram.find("CMS_my_res_j_2018do"); it != map_nuisances_average_histogram.end()) {
+                it->second.Add(histo.get(), 0.1); // 0.1 = 1/10.
+              }
+              else {
+                map_nuisances_average_histogram["CMS_my_res_j_2018do"] = (*histo);
+              }
+            }
+
+          }
+          else {
+            // if it's NOT a histogram to be averaged, then write it directly
+            histo->Write();
+          }
 
         }
+
+
+        // ----
+        // now write all the averaged histograms
+        for (auto const& [name, histo] : map_nuisances_average_histogram) {
+          histo.Write();
+          std::cout << "writing: " << name << " --> " << histo.GetName() << std::endl;
+        }
+        //----
+
+
       }
       out_file.cd(); // Go back to root for the next directory
     }

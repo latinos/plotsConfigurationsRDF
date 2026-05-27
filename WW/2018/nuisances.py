@@ -269,7 +269,7 @@ nuisances['myJER'] = {
     'skipCMS' : 1,
     'kind': 'suffixFly',
     'type': 'shape',
-    'external' : "code/mymll.c",
+    'external' : "code/jer_on_the_fly.c",
     'variables': ["Lepton_pt[0]", "Lepton_eta[0]", "Lepton_phi[0]", "Lepton_pt[1]", "Lepton_eta[1]", "Lepton_phi[1]"],
     'function' : 'calculate_mass',
     'samples': dict((skey, ['1', '1']) for skey in mcALL),
