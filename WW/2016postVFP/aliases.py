@@ -6,7 +6,7 @@
 #
 
 eleWP='mvaFall17V2Iso_WP90_tthmva_70'
-muWP='cut_Tight_HWWW_tthmva_80'
+muWP='cut_Tight80x_tthmva_80'
 
 
 
@@ -42,19 +42,19 @@ aliases['LepWPCut'] = {
 
 # ---------------------------- btagging
 #
-# b tagging WPs: https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18
+# b tagging WPs: https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16postVFP
 #
 #
-# bWP_medium_deepB = '0.4506'
+# bWP_medium_deepB = '0.5847'
 #
 
 aliases['bVeto'] = {
-    'expr' : 'ROOT::VecOps::Sum(Take(Jet_btagDeepB,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5] > 0.4506) == 0',
+    'expr' : 'ROOT::VecOps::Sum(Take(Jet_btagDeepB,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5] > 0.5847) == 0',
     'samples': ALL
 }
 
 aliases['bReq'] = {
-    'expr' : 'ROOT::VecOps::Sum(Take(Jet_btagDeepB,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5] > 0.4506) >= 1',
+    'expr' : 'ROOT::VecOps::Sum(Take(Jet_btagDeepB,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5] > 0.5847) >= 1',
     'samples': ALL
 }
 
@@ -164,10 +164,10 @@ aliases['njet'] = {
     'samples' : ALL
 }
 
-aliases['myVariableBDT'] = {
-  'variables': ["pt1", "ptj1", "mll", "njet"],
-  'function' : 'TMVA',
-  'xmlfile'  : 'code/TMVAClassification_BDTG.weights.xml',
-  'samples': ALL
-}
+# aliases['myVariableBDT'] = {
+#   'variables': ["pt1", "ptj1", "mll", "njet"],
+#   'function' : 'TMVA',
+#   'xmlfile'  : 'code/TMVAClassification_BDTG.weights.xml',
+#   'samples': ALL
+# }
 

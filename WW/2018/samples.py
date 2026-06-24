@@ -55,7 +55,6 @@ def addSubSampleWeights(samples, sampleName, subSampleName, weight):
 # The weights
 #
 
-# mcCommonWeight = 'XSWeight * SFweight * METFilter_MC * PromptGenLepMatch2l'
 mcCommonWeight = 'XSWeight * SFweight2l * LepWPCut * LepWPSF * Jet_PUIDSF * btagSF * METFilter_MC * PromptGenLepMatch2l'
 
 

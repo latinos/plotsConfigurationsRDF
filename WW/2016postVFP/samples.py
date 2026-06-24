@@ -8,11 +8,11 @@
 # How to get the list of files to be analysed
 #
 
-mcProduction = 'Summer20UL17_106x_nAODv9_Full2017v9'
-dataReco     = 'Run2017_UL2017_nAODv9_Full2017v9'
-mcSteps      = 'MCl1loose2017v9__MCCorr2017v9NoJERInHorn__l2tightOR2017v9'
-fakeSteps    = 'DATAl1loose2017v9__l2loose__fakeW'
-dataSteps    = 'DATAl1loose2017v9__l2loose__l2tightOR2017v9'
+mcProduction = 'Summer20UL16_106x_nAODv9_noHIPM_Full2016v9'
+dataReco     = 'Run2016_UL2016_nAODv9_noHIPM_Full2016v9'
+mcSteps      = 'MCl1loose2016v9__MCCorr2016v9NoJERInHorn__l2tightOR2016v9'
+fakeSteps    = 'DATAl1loose2016v9__l2loose__fakeW'
+dataSteps    = 'DATAl1loose2016v9__l2loose__l2tightOR2016v9'
 
 treeBaseDir = '/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano'
 
@@ -97,11 +97,9 @@ samples['DY'] = {
 
 
 DataRun = [
-    ['B','Run2017B-UL2017-v1'],
-    ['C','Run2017C-UL2017-v1'],
-    ['D','Run2017D-UL2017-v1'],
-    ['E','Run2017E-UL2017-v1'],
-    ['F','Run2017F-UL2017-v1'],
+    ['F','Run2016F-UL2016-v1'],
+    ['G','Run2016G_UL2016-v1'],
+    ['H','Run2016H_UL2016-v1']
 ]
 
 DataSets = [
