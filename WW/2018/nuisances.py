@@ -264,18 +264,18 @@ nuisances['JER'] = {
 # New JER implementation on the fly!
 #
 #
-nuisances['myJER'] = {
-    'name': 'CMS_res_j_2018_fly',
-    'skipCMS' : 1,
-    'kind': 'suffixFly',
-    'type': 'shape',
-    'external' : "code/jer_on_the_fly.c",
-    'code_in_main' : "code/jer_on_the_fly_main.c",
-    'pattern' : 'CMS_my_res_j_XXXX',
-    'numVariations' : 3,
-    'samples': dict((skey, ['1', '1']) for skey in mcALL),
-    'AsLnN': '0'
-}
+# nuisances['myJER'] = {
+#     'name': 'CMS_res_j_2018_fly',
+#     'skipCMS' : 1,
+#     'kind': 'suffixFly',
+#     'type': 'shape',
+#     'external' : "code/jer_on_the_fly.c",
+#     'code_in_main' : "code/jer_on_the_fly_main.c",
+#     'pattern' : 'CMS_my_res_j_XXXX',
+#     'numVariations' : 3,
+#     'samples': dict((skey, ['1', '1']) for skey in mcALL),
+#     'AsLnN': '0'
+# }
 
 # /cvmfs/cms.cern.ch/rsync/cms-nanoAOD/jsonpog-integration/POG/JME/2018_UL/jet_jerc.json.gz
 

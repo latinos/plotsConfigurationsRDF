@@ -9,9 +9,19 @@ Setup:
 Histogram production
 
 
-Prepare the scripts and compile them:
+Prepare the scripts:
 
     mkShapes.py  --pycfg=configuration.py
+
+NB: the preparation of the scripts will clean all the compiled code.
+
+Compile the scripts locally:
+
+    mkShapes.py  --pycfg=configuration.py     --localCompile
+
+Compile the scripts on cluster:
+
+    mkShapes.py  --pycfg=configuration.py     --parallelCompile
 
 Submit on batch system:
 
@@ -117,8 +127,26 @@ Readable:
 
 
 
+    g++ -O2 -Wall -fPIC -pthread -std=c++20 -m64 -fsized-deallocation -I/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/include -Iscripts_run/  scripts_run/top/TTTo2L2Nu/my_run_analysis_top_TTTo2L2Nu_0.cpp -o scripts_run/top/TTTo2L2Nu/my_run_analysis_top_TTTo2L2Nu_0 -Lscripts_run/ -llibrary_utils -L/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lROOTNTuple -lROOTNTupleUtil -lMultiProc -lROOTDataFrame -Wl,-rpath,/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -pthread -lm -ldl -rdynamic -lTMVA -lXMLIO -I/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/include -L/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/lib -lcorrectionlib -Wl,-rpath,'$ORIGIN:$ORIGINscripts_run/'
 
 
+    g++ -O2 -Wall -fPIC -pthread -std=c++20 -m64 -fsized-deallocation -I/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/include -Iscripts_run/  scripts_run/top/TTTo2L2Nu/my_run_analysis_top_TTTo2L2Nu_0.cpp -o scripts_run/top/TTTo2L2Nu/my_run_analysis_top_TTTo2L2Nu_0 -Lscripts_run/ -llibrary_utils -L/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lROOTNTuple -lROOTNTupleUtil -lMultiProc -lROOTDataFrame -Wl,-rpath,/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib -pthread -lm -ldl -rdynamic -lTMVA -lXMLIO -I/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/include -L/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/lib -lcorrectionlib -Wl,-rpath,'$ORIGIN:$ORIGIN/../../'
+
+
+
+    g++ -O2 -Wall -fPIC -pthread -std=c++20 -m64 -fsized-deallocation \
+    -I/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/include \
+    -Iscripts_run/ scripts_run/top/TTTo2L2Nu/my_run_analysis_top_TTTo2L2Nu_0.cpp \
+    -o scripts_run/top/TTTo2L2Nu/my_run_analysis_top_TTTo2L2Nu_0 \
+    -Lscripts_run/ -llibrary_utils \
+    -L/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib \
+    -lCore -lImt -lRIO -lNet -lHist -lGraf -lGraf3d -lGpad -lROOTVecOps -lTree -lTreePlayer -lRint -lPostscript -lMatrix -lPhysics -lMathCore -lThread -lROOTNTuple -lROOTNTupleUtil -lMultiProc -lROOTDataFrame \
+    -Wl,-rpath,/cvmfs/sft.cern.ch/lcg/releases/ROOT/6.38.04-57e03/x86_64-el9-gcc13-opt/lib \
+    -pthread -lm -ldl -rdynamic -lTMVA -lXMLIO \
+    -I/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/include \
+    -L/cvmfs/sft.cern.ch/lcg/views/LCG_109a/x86_64-el9-gcc13-opt/lib \
+    -lcorrectionlib \
+    -Wl,-rpath,'$ORIGIN/../../'
 
 
 
