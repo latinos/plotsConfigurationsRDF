@@ -5,8 +5,8 @@
 #
 #
 
-eleWP='mvaFall17V2Iso_WP90_tthmva_70'
-muWP='cut_Tight_HWWW_tthmva_80'
+eleWP = 'cutBased_LooseID_tthMVA_Run3'
+muWP  = 'cut_TightID_pfIsoTight_HWW_tthmva_67'
 
 
 
@@ -42,36 +42,36 @@ aliases['LepWPCut'] = {
 
 # ---------------------------- btagging
 #
-# b tagging WPs: https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18
+# B-Tagging WP: https://btv-wiki.docs.cern.ch/ScaleFactors/Run3Summer22/
 #
 #
-# bWP_medium_deepB = '0.4506'
+# bWP_medium_deepB = '0.0499'
 #
 
 aliases['bVeto'] = {
-    'expr' : 'ROOT::VecOps::Sum(Take(Jet_btagDeepB,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5] > 0.4506) == 0',
+    'expr' : 'ROOT::VecOps::Sum(Take(Jet_btagPNetB,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5] > 0.0499) == 0',
     'samples': ALL
 }
 
 aliases['bReq'] = {
-    'expr' : 'ROOT::VecOps::Sum(Take(Jet_btagDeepB,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5] > 0.4506) >= 1',
+    'expr' : 'ROOT::VecOps::Sum(Take(Jet_btagPNetB,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5] > 0.0499) >= 1',
     'samples': ALL
 }
 
-aliases['bVetoSF'] = {
-    'expr' : 'ROOT::VecOps::Product(Take(Jet_btagSF_deepcsv_shape,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5])',
-    'samples': mcALL
-}
-
-aliases['bReqSF'] = {
-    'expr' : 'ROOT::VecOps::Product(Take(Jet_btagSF_deepcsv_shape,CleanJet_jetIdx)[CleanJet_pt > 30 && abs(CleanJet_eta) < 2.5])',
-    'samples': mcALL
-}
-
-aliases['btagSF'] = {
-    'expr': 'bVeto*bVetoSF + bReq*bReqSF',
-    'samples': mcALL
-}
+# aliases['bVetoSF'] = {
+#     'expr' : 'ROOT::VecOps::Product(Take(Jet_btagSF_deepcsv_shape,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5])',
+#     'samples': mcALL
+# }
+#
+# aliases['bReqSF'] = {
+#     'expr' : 'ROOT::VecOps::Product(Take(Jet_btagSF_deepcsv_shape,CleanJet_jetIdx)[CleanJet_pt > 30 && abs(CleanJet_eta) < 2.5])',
+#     'samples': mcALL
+# }
+#
+# aliases['btagSF'] = {
+#     'expr': 'bVeto*bVetoSF + bReq*bReqSF',
+#     'samples': mcALL
+# }
 
 
 
@@ -164,10 +164,10 @@ aliases['njet'] = {
     'samples' : ALL
 }
 
-# aliases['myVariableBDT'] = {
-#   'variables': ["pt1", "ptj1", "mll", "njet"],
-#   'function' : 'TMVA',
-#   'xmlfile'  : 'code/TMVAClassification_BDTG.weights.xml',
-#   'samples': ALL
-# }
+aliases['myVariableBDT'] = {
+  'variables': ["pt1", "ptj1", "mll", "njet"],
+  'function' : 'TMVA',
+  'xmlfile'  : 'code/TMVAClassification_BDTG.weights.xml',
+  'samples': ALL
+}
 
