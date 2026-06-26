@@ -40,7 +40,6 @@ def nanoGetSampleFiles(path, name):
   return  {name : _files}
 
 
-
 def addSubSampleWeights(samples, sampleName, subSampleName, weight):
   if 'weights' not in samples[sampleName].keys():
     samples[sampleName]['weights'] = {}

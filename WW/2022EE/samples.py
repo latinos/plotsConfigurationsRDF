@@ -8,7 +8,6 @@
 # How to get the list of files to be analysed
 #
 
-
 mcProduction = 'Summer22EE_130x_nAODv12_Full2022v12'
 mcSteps = 'MCl2loose2022EEv12__MCCorr2022EEv12JetScaling__l2tight'
 dataReco = 'Run2022EE_Prompt_nAODv12_Full2022v12'
@@ -39,7 +38,17 @@ redirector = 'root://eoscms.cern.ch/'
 def nanoGetSampleFiles(path, name):
   _files = searchFiles.searchFiles(path, name, redirector=redirector)
   return  {name : _files}
-  # return  [(name, _files)]
+
+
+def addSubSampleWeights(samples, sampleName, subSampleName, weight):
+  if 'weights' not in samples[sampleName].keys():
+    samples[sampleName]['weights'] = {}
+  if subSampleName in samples[sampleName]['weights'].keys():
+    samples[sampleName]['weights'][subSampleName] = "(" + samples[sampleName]['weights'][subSampleName] + ") * " +  weight
+  else :
+    samples[sampleName]['weights'][subSampleName] = weight
+
+
 
 
 #
@@ -60,14 +69,14 @@ mcCommonWeight = 'XSWeight * SFweight2l * LepWPCut * LepWPSF * Jet_PUIDSF * METF
 
 ############ Top ############
 
-files = nanoGetSampleFiles(mcDirectory, 'TTTo2L2Nu') + \
-        nanoGetSampleFiles(mcDirectory, 'TbarWplusto2L2Nu') + \
-        nanoGetSampleFiles(mcDirectory, 'TWminusto2L2Nu') + \
-        nanoGetSampleFiles(mcDirectory, 'ST_t-channel_top') + \
-        nanoGetSampleFiles(mcDirectory, 'ST_t-channel_antitop') + \
-        nanoGetSampleFiles(mcDirectory, 'ST_s-channel_plus') + \
-        nanoGetSampleFiles(mcDirectory, 'ST_s-channel_minus')
 
+files = nanoGetSampleFiles(mcDirectory, 'TTTo2L2Nu') | \
+        nanoGetSampleFiles(mcDirectory, 'TbarWplusto2L2Nu') | \
+        nanoGetSampleFiles(mcDirectory, 'TWminusto2L2Nu') | \
+        nanoGetSampleFiles(mcDirectory, 'ST_t-channel_top') | \
+        nanoGetSampleFiles(mcDirectory, 'ST_t-channel_antitop') | \
+        nanoGetSampleFiles(mcDirectory, 'ST_s-channel_plus') | \
+        nanoGetSampleFiles(mcDirectory, 'ST_s-channel_minus')
 
 samples['top'] = {
     'name': files,
@@ -75,6 +84,8 @@ samples['top'] = {
     # 'weight': mcCommonWeight + " * Top_pTrw ",
     'FilesPerJob': 3,
 }
+
+addSubSampleWeights (samples, 'top', 'TTTo2L2Nu', 'Top_pTrw')
 
 
 ############ DY ############

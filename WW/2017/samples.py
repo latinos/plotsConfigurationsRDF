@@ -38,7 +38,16 @@ redirector = 'root://eoscms.cern.ch/'
 def nanoGetSampleFiles(path, name):
   _files = searchFiles.searchFiles(path, name, redirector=redirector)
   return  {name : _files}
-  # return  [(name, _files)]
+
+
+def addSubSampleWeights(samples, sampleName, subSampleName, weight):
+  if 'weights' not in samples[sampleName].keys():
+    samples[sampleName]['weights'] = {}
+  if subSampleName in samples[sampleName]['weights'].keys():
+    samples[sampleName]['weights'][subSampleName] = "(" + samples[sampleName]['weights'][subSampleName] + ") * " +  weight
+  else :
+    samples[sampleName]['weights'][subSampleName] = weight
+
 
 
 #
