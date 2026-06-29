@@ -5,7 +5,50 @@
 #
 #
 
-eleWP = 'cutBased_LooseID_tthMVA_Run3'
+#
+#   LepCut2l__ele_cutBased_MediumID_tthMVA_HWW__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
+#   LepCut2l__ele_wp90iso__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
+#   LepCut2l__ele_testrecipes__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
+#   LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_Run3__mu_cut_Tight_HWW;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_Run3__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
+#   LepCut2l__ele_testrecipes__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
+#   LepCut2l__ele_wp90iso__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
+#   LepCut2l__ele_wp90iso__mu_cut_TightID_POG;
+#   LepCut2l__ele_testrecipes__mu_cut_Tight_HWW;
+#   LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_TightID_POG;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_Run3__mu_cut_TightID_POG;
+#   LepCut2l__ele_testrecipes__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
+#   LepCut2l__ele_wp90iso__mu_cut_Tight_HWW;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_HWW__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
+#   LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_Run3__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
+#   LepCut2l__ele_cutBased_MediumID_tthMVA_HWW__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90__mu_cut_Tight_HWW;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_HWW__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90__mu_cut_TightID_POG;
+#   LepCut2l__ele_testrecipes__mu_cut_TightID_POG;
+#   LepCut2l__ele_wp90iso__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
+#   LepCut2l__ele_cutBased_MediumID_tthMVA_HWW__mu_cut_Tight_HWW;
+#   LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_HWW__mu_cut_Tight_HWW;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_Run3__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_HWW__mu_cut_TightID_POG;
+#   LepCut2l__ele_cutBased_MediumID_tthMVA_HWW__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_HWW__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
+#   LepCut2l__ele_mvaWinter22V2Iso_WP90__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
+#   LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_Tight_HWW;
+#   LepCut2l__ele_cutBased_MediumID_tthMVA_HWW__mu_cut_TightID_POG;
+#
+#
+# LepCut2l__ele_cutBased_LooseID_tthMVA_Run3__mu_cut_TightID_pfIsoTight_HWW_tthmva_67
+# LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_TightID_pfIsoTight_HWW_tthmva_67
+#
+
+# eleWP = 'cutBased_LooseID_tthMVA_Run3'
+eleWP = 'cutBased_MediumID_tthMVA_Run3'
 muWP  = 'cut_TightID_pfIsoTight_HWW_tthmva_67'
 
 
@@ -78,20 +121,20 @@ aliases['bReq'] = {
 
 
 # --------------------------- PU weights
-aliases['Jet_PUIDSF'] = {
-  'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose[Jet_jetId>=2])',
-  'samples': mcALL
-}
-
-aliases['Jet_PUIDSF_up'] = {
-  'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose_up[Jet_jetId>=2])',
-  'samples': mcALL
-}
-
-aliases['Jet_PUIDSF_down'] = {
-  'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose_down[Jet_jetId>=2])',
-  'samples': mcALL
-}
+# aliases['Jet_PUIDSF'] = {
+#   'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose[Jet_jetId>=2])',
+#   'samples': mcALL
+# }
+#
+# aliases['Jet_PUIDSF_up'] = {
+#   'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose_up[Jet_jetId>=2])',
+#   'samples': mcALL
+# }
+#
+# aliases['Jet_PUIDSF_down'] = {
+#   'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose_down[Jet_jetId>=2])',
+#   'samples': mcALL
+# }
 
 
 
@@ -112,7 +155,8 @@ aliases['SFweightEleUp'] = {
     'samples': mcALL
 }
 aliases['SFweightEleDown'] = {
-    'expr': 'LepSF2l__ele_'+eleWP+'__Do',
+    # 'expr': 'LepSF2l__ele_'+eleWP+'__Do',
+    'expr': 'LepSF2l__ele_'+eleWP+'__Down',
     'samples': mcALL
 }
 aliases['SFweightMuUp'] = {
@@ -120,7 +164,8 @@ aliases['SFweightMuUp'] = {
     'samples': mcALL
 }
 aliases['SFweightMuDown'] = {
-    'expr': 'LepSF2l__mu_'+muWP+'__Do',
+    # 'expr': 'LepSF2l__mu_'+muWP+'__Do',
+    'expr': 'LepSF2l__mu_'+muWP+'__Down',
     'samples': mcALL
 }
 
@@ -164,10 +209,10 @@ aliases['njet'] = {
     'samples' : ALL
 }
 
-aliases['myVariableBDT'] = {
-  'variables': ["pt1", "ptj1", "mll", "njet"],
-  'function' : 'TMVA',
-  'xmlfile'  : 'code/TMVAClassification_BDTG.weights.xml',
-  'samples': ALL
-}
+# aliases['myVariableBDT'] = {
+#   'variables': ["pt1", "ptj1", "mll", "njet"],
+#   'function' : 'TMVA',
+#   'xmlfile'  : 'code/TMVAClassification_BDTG.weights.xml',
+#   'samples': ALL
+# }
 

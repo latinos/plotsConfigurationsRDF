@@ -55,7 +55,9 @@ def addSubSampleWeights(samples, sampleName, subSampleName, weight):
 # The weights
 #
 
-mcCommonWeight = 'XSWeight * SFweight2l * LepWPCut * LepWPSF * Jet_PUIDSF * METFilter_MC * PromptGenLepMatch2l'
+mcCommonWeight = 'XSWeight * SFweight2l * LepWPCut * LepWPSF * PromptGenLepMatch2l'
+# mcCommonWeight = 'XSWeight * SFweight2l * LepWPCut * LepWPSF * METFilter_MC * PromptGenLepMatch2l'
+# mcCommonWeight = 'XSWeight * SFweight2l * LepWPCut * LepWPSF * Jet_PUIDSF * METFilter_MC * PromptGenLepMatch2l'
 # mcCommonWeight = 'XSWeight * SFweight2l * LepWPCut * LepWPSF * Jet_PUIDSF * btagSF * METFilter_MC * PromptGenLepMatch2l'
 
 
@@ -132,7 +134,8 @@ DataTrig = {
 
 samples['DATA'] = {
   'name': {},
-  'weight': 'LepWPCut*METFilter_DATA',
+  'weight': 'LepWPCut',
+  # 'weight': 'LepWPCut*METFilter_DATA',
   'weights': {},
   'isData': ['all'],
   'FilesPerJob': 10

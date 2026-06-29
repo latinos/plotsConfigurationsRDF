@@ -49,16 +49,32 @@ nuisances['QCDscale_CRSR_accept_dytt']  = {
 
 
 
-nuisances['electronpt'] = {
-    'name': 'scale_e_2017_UL',
+# nuisances['electronpt'] = {
+#     'name': 'scale_e_2017_UL',
+#     'kind': 'suffix',
+#     'type': 'shape',
+#     'mapUp': 'ElepTup',
+#     'mapDown': 'ElepTdo',
+#     'samples': dict((skey, ['1', '1']) for skey in mcALL),
+#     'folderUp': makeMCDirectory('ElepTup_suffix'),
+#     'folderDown': makeMCDirectory('ElepTdo_suffix'),
+# }
+
+
+
+##### Lepton scale
+nuisances['lepscale'] = {
+    'name': 'lepscale_2022EE',
     'kind': 'suffix',
     'type': 'shape',
-    'mapUp': 'ElepTup',
-    'mapDown': 'ElepTdo',
+    'mapUp': 'leptonScaleup',
+    'mapDown': 'leptonScaledo',
     'samples': dict((skey, ['1', '1']) for skey in mcALL),
-    'folderUp': makeMCDirectory('ElepTup_suffix'),
-    'folderDown': makeMCDirectory('ElepTdo_suffix'),
+    'folderUp': makeMCDirectory('leptonScaleup_suffix'),
+    'folderDown': makeMCDirectory('leptonScaledo_suffix'),
+    'AsLnN': '0'
 }
+
 
 
 
