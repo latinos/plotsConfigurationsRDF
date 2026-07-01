@@ -1,9 +1,10 @@
 
 
+
 def makeMCDirectory(var=""):
     treeBaseDir = '/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano'
-    mcProduction = 'Summer22EE_130x_nAODv12_Full2022v12'
-    mcSteps = 'MCl2loose2022EEv12__MCCorr2022EEv12JetScaling__l2tight'
+    mcProduction = 'Summer23_130x_nAODv12_Full2023v12'
+    mcSteps      = 'MCl2loose2023v12__MCCorr2023v12JetScaling__l2tight'
     _treeBaseDir = treeBaseDir + ""
     if var == "":
         return "/".join([_treeBaseDir, mcProduction, mcSteps])
@@ -12,10 +13,11 @@ def makeMCDirectory(var=""):
 
 
 
-nuisances['lumi_2022EE'] = {
-    'name'    : 'lumi_2022EE',
+
+nuisances['lumi_2023'] = {
+    'name'    : 'lumi_2023',
     'type'    : 'lnN',
-    'samples' : dict((skey, '1.014') for skey in mcALL)
+    'samples' : dict((skey, '1.013') for skey in mcALL)
 }
 
 
@@ -53,7 +55,7 @@ nuisances['QCDscale_CRSR_accept_dytt']  = {
 
 ##### Lepton scale
 nuisances['lepscale'] = {
-    'name': 'lepscale_2022EE',
+    'name': 'lepscale_2023',
     'kind': 'suffix',
     'type': 'shape',
     'mapUp': 'leptonScaleup',
@@ -69,7 +71,7 @@ nuisances['lepscale'] = {
 
 # ------------------- muon efficiency and energy scale
 nuisances['eff_m'] = {
-    'name': 'eff_m_2017_UL',
+    'name': 'eff_m_2022',
     'kind': 'weight',
     'type': 'shape',
     #                        nominal          up               down

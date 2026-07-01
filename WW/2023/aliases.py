@@ -5,52 +5,9 @@
 #
 #
 
-#
-#   LepCut2l__ele_cutBased_MediumID_tthMVA_HWW__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
-#   LepCut2l__ele_wp90iso__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
-#   LepCut2l__ele_testrecipes__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
-#   LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_Run3__mu_cut_Tight_HWW;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_Run3__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
-#   LepCut2l__ele_testrecipes__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
-#   LepCut2l__ele_wp90iso__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
-#   LepCut2l__ele_wp90iso__mu_cut_TightID_POG;
-#   LepCut2l__ele_testrecipes__mu_cut_Tight_HWW;
-#   LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_TightID_POG;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_Run3__mu_cut_TightID_POG;
-#   LepCut2l__ele_testrecipes__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
-#   LepCut2l__ele_wp90iso__mu_cut_Tight_HWW;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_HWW__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
-#   LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_Run3__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
-#   LepCut2l__ele_cutBased_MediumID_tthMVA_HWW__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90__mu_cut_Tight_HWW;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_HWW__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90__mu_cut_TightID_POG;
-#   LepCut2l__ele_testrecipes__mu_cut_TightID_POG;
-#   LepCut2l__ele_wp90iso__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
-#   LepCut2l__ele_cutBased_MediumID_tthMVA_HWW__mu_cut_Tight_HWW;
-#   LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_HWW__mu_cut_Tight_HWW;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_Run3__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_HWW__mu_cut_TightID_POG;
-#   LepCut2l__ele_cutBased_MediumID_tthMVA_HWW__mu_cut_TightID_pfIsoTight_HWW_tthmva_67;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90_tthMVA_HWW__mu_cut_TightID_pfIsoLoose_HWW_tthmva_67;
-#   LepCut2l__ele_mvaWinter22V2Iso_WP90__mu_cut_TightID_pfIsoLoose_HWW_tthmva_HWW;
-#   LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_Tight_HWW;
-#   LepCut2l__ele_cutBased_MediumID_tthMVA_HWW__mu_cut_TightID_POG;
-#
-#
-# LepCut2l__ele_cutBased_LooseID_tthMVA_Run3__mu_cut_TightID_pfIsoTight_HWW_tthmva_67
-# LepCut2l__ele_cutBased_MediumID_tthMVA_Run3__mu_cut_TightID_pfIsoTight_HWW_tthmva_67
-#
-
 # eleWP = 'cutBased_LooseID_tthMVA_Run3'
 eleWP = 'cutBased_MediumID_tthMVA_Run3'
 muWP  = 'cut_TightID_pfIsoTight_HWW_tthmva_67'
-
 
 
 
@@ -88,7 +45,7 @@ aliases['LepWPCut'] = {
 # B-Tagging WP: https://btv-wiki.docs.cern.ch/ScaleFactors/Run3Summer22/
 #
 #
-# loose = '0.0499'
+#    "PNetB" : {"loose" : "0.0499", "medium" : "0.2605", "tight" : "0.6915", "xtight"  : "0.8033", "xxtight" : "0.9664"}
 #
 
 aliases['bVeto'] = {
@@ -174,7 +131,7 @@ aliases['SFweightMuDown'] = {
 
 aliases['Top_pTrw'] = {
   'expr': '(topGenPt * antitopGenPt > 0.) * (TMath::Sqrt((0.103*TMath::Exp(-0.0118*topGenPt) - 0.000134*topGenPt + 0.973) * (0.103*TMath::Exp(-0.0118*antitopGenPt) - 0.000134*antitopGenPt + 0.973))) + (topGenPt * antitopGenPt <= 0.)',
-# 'expr': '(topGenPt * antitopGenPt > 0.) * (TMath::Sqrt(TMath::Exp(0.0615 - 0.0005 * topGenPt) * TMath::Exp(0.0615 - 0.0005 * antitopGenPt))) + (topGenPt * antitopGenPt <= 0.)',
+  # 'expr': '(topGenPt * antitopGenPt > 0.) * (TMath::Sqrt(TMath::Exp(0.0615 - 0.0005 * topGenPt) * TMath::Exp(0.0615 - 0.0005 * antitopGenPt))) + (topGenPt * antitopGenPt <= 0.)',
   'samples': ['top']
 }
 
