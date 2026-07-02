@@ -3,8 +3,8 @@
 
 def makeMCDirectory(var=""):
     treeBaseDir = '/eos/cms/store/group/phys_higgs/cmshww/amassiro/HWWNano'
-    mcProduction   = 'Summer24_150x_nAODv15_Full2024v15'
-    mcSteps        = 'MCl2loose2024v15__MCCorr2024v15__JERFrom23BPix__l2tight'
+    mcProduction        = 'Summer24_150x_nAODv15_Full2024v15_OLD'
+    mcSteps             = 'MCl2loose2024v15__MCCorr2024v15__JERFrom23BPix__l2tight'
     _treeBaseDir = treeBaseDir + ""
     if var == "":
         return "/".join([_treeBaseDir, mcProduction, mcSteps])
@@ -14,8 +14,8 @@ def makeMCDirectory(var=""):
 
 
 
-nuisances['lumi_2024'] = {
-    'name'    : 'lumi_2024',
+nuisances['lumi_2025'] = {
+    'name'    : 'lumi_2025',
     'type'    : 'lnN',
     'samples' : dict((skey, '1.013') for skey in mcALL)
 }
@@ -54,24 +54,24 @@ nuisances['QCDscale_CRSR_accept_dytt']  = {
 
 
 ##### Lepton scale
-nuisances['lepscale'] = {
-    'name': 'lepscale_2023BPix',
-    'kind': 'suffix',
-    'type': 'shape',
-    'mapUp': 'leptonScaleup',
-    'mapDown': 'leptonScaledo',
-    'samples': dict((skey, ['1', '1']) for skey in mcALL),
-    'folderUp': makeMCDirectory('leptonScaleup_suffix'),
-    'folderDown': makeMCDirectory('leptonScaledo_suffix'),
-    'AsLnN': '0'
-}
-
-
+# nuisances['lepscale'] = {
+#     'name': 'lepscale_2025BPix',
+#     'kind': 'suffix',
+#     'type': 'shape',
+#     'mapUp': 'leptonScaleup',
+#     'mapDown': 'leptonScaledo',
+#     'samples': dict((skey, ['1', '1']) for skey in mcALL),
+#     'folderUp': makeMCDirectory('leptonScaleup_suffix'),
+#     'folderDown': makeMCDirectory('leptonScaledo_suffix'),
+#     'AsLnN': '0'
+# }
+#
+#
 
 
 # ------------------- muon efficiency and energy scale
 nuisances['eff_m'] = {
-    'name': 'eff_m_2024',
+    'name': 'eff_m_2025',
     'kind': 'weight',
     'type': 'shape',
     #                        nominal          up               down
