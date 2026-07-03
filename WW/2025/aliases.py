@@ -98,12 +98,14 @@
 #   TBranch        *b_LepCut4l__ele_mvaWinter22V2Iso_WP90__mu_cut_Tight_HWW;   //!
 #
 
-
+#
+# LepCut2l__ele_cutBased_LooseID_tthMVA_Run3__mu_cut_TightID_pfIsoLoose_HWW_PNet
+#
 
 eleWP = 'cutBased_LooseID_tthMVA_Run3'
 # eleWP = 'cutBased_MediumID_tthMVA_Run3'
-muWP  = 'cut_TightID_pfIsoTight_HWW_tthmva_67'
-
+# muWP  = 'cut_TightID_pfIsoTight_HWW_tthmva_67'
+muWP  = 'cut_TightID_pfIsoLoose_HWW_PNet'
 
 
 aliases['PromptGenLepMatch2l'] = {
