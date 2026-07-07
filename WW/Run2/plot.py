@@ -100,8 +100,10 @@ plot['DATA']  = {
 }
 
 # additional options
-legend['lumi'] = 'L = 59.8 + 41.5 fb^{-1}'
+legend['lumi'] = 'L = 138 fb^{-1}'
 legend['sqrt'] = '#sqrt{s} = 13 TeV'
+legend['period'] = 5
 
 
-
+# 16.81 + 19.52 + 59.8 + 41.5
+# --> 137.63

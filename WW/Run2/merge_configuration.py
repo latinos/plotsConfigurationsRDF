@@ -1,6 +1,6 @@
 
 # tag: used to define root file name and more
-tag = 'ggHgg_full_Run2'
+tag = 'WW_full_Run2'
 
 # File with dict of variables
 variablesFile = "variables.py"
@@ -23,6 +23,16 @@ nuisancesFile = "nuisances.py"
 
 # Folders to merge
 foldersToMerge = {
+
+                  "2016ULpreVFP" : {
+                    "folder" : "../2016preVFP",
+                    "tag"    : "WW",
+                   },
+
+                  "2016ULpostVFP" : {
+                    "folder" : "../2016postVFP",
+                    "tag"    : "WW",
+                   },
 
                   "2017UL" : {
                     "folder" : "../2017",

@@ -25,26 +25,29 @@ nuisances['QCDscale_CRSR_accept_dytt']  = {
               }
 
 
+#
+# FIXME: problematic?!?
+#
 
-nuisances['electronpt'] = {
-    'name': 'scale_e_2018_UL',
-    'kind': 'suffix',
-    'type': 'shape',
-    'mapUp': 'ElepTup',
-    'mapDown': 'ElepTdo',
-    'samples': dict((skey, ['1', '1']) for skey in mcALL),
-}
+# nuisances['electronpt'] = {
+#     'name': 'scale_e_2018_UL',
+#     'kind': 'suffix',
+#     'type': 'shape',
+#     'mapUp': 'ElepTup',
+#     'mapDown': 'ElepTdo',
+#     'samples': dict((skey, ['1', '1']) for skey in mcALL),
+# }
 
 
 
 # ------------------- muon efficiency and energy scale
-nuisances['eff_m'] = {
-    'name': 'eff_m_2018_UL',
-    'kind': 'weight',
-    'type': 'shape',
-    #                        nominal          up               down
-    'samples': dict((skey, ['SFweightMu','SFweightMuUp', 'SFweightMuDown']) for skey in mcALL)
-}
+# nuisances['eff_m'] = {
+#     'name': 'eff_m_2018_UL',
+#     'kind': 'weight',
+#     'type': 'shape',
+#     #                        nominal          up               down
+#     'samples': dict((skey, ['SFweightMu','SFweightMuUp', 'SFweightMuDown']) for skey in mcALL)
+# }
 
 
 
