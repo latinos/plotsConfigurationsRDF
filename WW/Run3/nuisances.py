@@ -38,15 +38,48 @@ nuisances['lumi_2024'] = {
 
 
 ##### Lepton scale
-# nuisances['lepscale'] = {
-#     'name': 'lepscale_2023',
-#     'kind': 'suffix',
-#     'type': 'shape',
-#     'mapUp': 'leptonScaleup',
-#     'mapDown': 'leptonScaledo',
-#     'samples': dict((skey, ['1', '1']) for skey in mcALL),
-#     'AsLnN': '0'
-# }
+nuisances['lepscale_2022'] = {
+    'name': 'lepscale_2022',
+    'kind': 'suffix',
+    'type': 'shape',
+    'mapUp': 'leptonScaleup',
+    'mapDown': 'leptonScaledo',
+    'samples': dict((skey, ['1', '1']) for skey in mcALL),
+    'AsLnN': '0'
+}
+
+nuisances['lepscale_2022EE'] = {
+    'name': 'lepscale_2022EE',
+    'kind': 'suffix',
+    'type': 'shape',
+    'mapUp': 'leptonScaleup',
+    'mapDown': 'leptonScaledo',
+    'samples': dict((skey, ['1', '1']) for skey in mcALL),
+    'AsLnN': '0'
+}
+
+nuisances['lepscale_2023'] = {
+    'name': 'lepscale_2023',
+    'kind': 'suffix',
+    'type': 'shape',
+    'mapUp': 'leptonScaleup',
+    'mapDown': 'leptonScaledo',
+    'samples': dict((skey, ['1', '1']) for skey in mcALL),
+    'AsLnN': '0'
+}
+
+
+##### Lepton scale
+nuisances['lepscale_2023BPix'] = {
+    'name': 'lepscale_2023BPix',
+    'kind': 'suffix',
+    'type': 'shape',
+    'mapUp': 'leptonScaleup',
+    'mapDown': 'leptonScaledo',
+    'samples': dict((skey, ['1', '1']) for skey in mcALL),
+    'AsLnN': '0'
+}
+
 
 
 # ------------------- muon efficiency and energy scale
