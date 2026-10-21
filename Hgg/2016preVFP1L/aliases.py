@@ -1,0 +1,192 @@
+# lists of samples (variables defined in samples.py are not visible here)
+# H>gluglu signal samples are missing the full post-processing (no LepCut2l, LepSF2l, ...)
+signalsNoPostProc = [skey for skey in samples if 'gluglu' in skey]
+mcALL = [skey for skey in samples if skey not in ['DATA', 'Fake_lep'] + signalsNoPostProc]
+ALL   = [skey for skey in samples]
+
+#
+# List of aliases to be "defined"
+# This list will NOT be the actual "Alias" of RDataFrame (as useless)
+# but "Define" of all this math will be performed
+#
+#
+
+eleWP='mvaFall17V2Iso_WP90_tthmva_70'
+muWP='cut_Tight80x_tthmva_80'
+
+
+
+
+aliases['PromptGenLepMatch2l'] = {
+    'expr': '(Lepton_promptgenmatched.size() > 0 ? Lepton_promptgenmatched[0] : 0.) * (Lepton_promptgenmatched.size() > 1 ? Lepton_promptgenmatched[0] : 0.)',
+    'samples': mcALL
+}
+
+
+
+
+aliases['mumu'] = {
+    'expr': '(Lepton_pdgId.size() > 0 ? Lepton_pdgId[0] : -99) * (Lepton_pdgId.size() > 1 ? Lepton_pdgId[1]: -99) == -13*13',
+    'samples': ALL
+}
+
+aliases['ee'] = {
+    'expr': '(Lepton_pdgId.size() > 0 ? Lepton_pdgId[0] : -99) * (Lepton_pdgId.size() > 1 ? Lepton_pdgId[1]: -99) == -11*11',
+    'samples': ALL
+}
+
+
+
+
+# -------- lepton WP
+# 1 lepton: see https://github.com/latinos/PlotsConfigurationsRun3/blob/amassiro-Hgg/Hgg/2018UL1l/aliases.py
+eleWP1l = 'mvaFall17V2Iso_WP90'
+muWP1l  = 'cut_Tight_HWWW'
+
+# lepton id cut
+aliases['LepWPCut_1l'] = {
+    'expr': '(Lepton_isTightElectron_'+eleWP1l+'[0]>0.5 || Lepton_isTightMuon_'+muWP1l+'[0]>0.5)',
+    'samples': [skey for skey in ALL if skey not in signalsNoPostProc]
+}
+
+# lepton id SF
+aliases['LepWPWeight_1l'] = {
+    'expr': 'Lepton_tightElectron_'+eleWP1l+'_IdIsoSF[0] * Lepton_tightMuon_'+muWP1l+'_IdIsoSF[0]',
+    'samples': mcALL
+}
+
+
+
+# ---------------------------- btagging
+#
+# b tagging WPs: https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
+#
+#
+# bWP_medium_deepB = '0.6001'
+#
+
+aliases['bVeto'] = {
+    'expr' : 'ROOT::VecOps::Sum(Take(Jet_btagDeepB,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5] > 0.6001) == 0',
+    'samples': ALL
+}
+
+aliases['bReq'] = {
+    'expr' : 'ROOT::VecOps::Sum(Take(Jet_btagDeepB,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5] > 0.6001) >= 1',
+    'samples': ALL
+}
+
+aliases['bVetoSF'] = {
+    'expr' : 'ROOT::VecOps::Product(Take(Jet_btagSF_deepcsv_shape,CleanJet_jetIdx)[CleanJet_pt > 20 && abs(CleanJet_eta) < 2.5])',
+    'samples': mcALL
+}
+
+aliases['bReqSF'] = {
+    'expr' : 'ROOT::VecOps::Product(Take(Jet_btagSF_deepcsv_shape,CleanJet_jetIdx)[CleanJet_pt > 30 && abs(CleanJet_eta) < 2.5])',
+    'samples': mcALL
+}
+
+aliases['btagSF'] = {
+    'expr': 'bVeto*bVetoSF + bReq*bReqSF',
+    'samples': mcALL
+}
+
+
+
+
+
+# --------------------------- PU weights
+aliases['Jet_PUIDSF'] = {
+  'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose[Jet_jetId>=2])',
+  'samples': mcALL
+}
+
+aliases['Jet_PUIDSF_up'] = {
+  'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose_up[Jet_jetId>=2])',
+  'samples': mcALL
+}
+
+aliases['Jet_PUIDSF_down'] = {
+  'expr' : 'ROOT::VecOps::Product(Jet_PUIDSF_loose_down[Jet_jetId>=2])',
+  'samples': mcALL
+}
+
+
+
+# FIXME: LepSF2l (from the 2 leptons l2tight step) not in the 1 lepton skim: 1 lepton SF variations to be defined
+# aliases['LepWPSF'] = {
+#     'expr': 'LepSF2l__ele_'+eleWP+'__mu_'+muWP,
+#     'samples': mcALL
+# }
+
+
+# see:
+# https://github.com/latinos/LatinoAnalysis/blob/master/NanoGardener/python/data/formulasToAdd_MC_2017.py
+#
+
+
+# variations
+# aliases['SFweightEleUp'] = {
+#     'expr': 'LepSF2l__ele_'+eleWP+'__Up',
+#     'samples': mcALL
+# }
+# aliases['SFweightEleDown'] = {
+#     'expr': 'LepSF2l__ele_'+eleWP+'__Do',
+#     'samples': mcALL
+# }
+# aliases['SFweightMuUp'] = {
+#     'expr': 'LepSF2l__mu_'+muWP+'__Up',
+#     'samples': mcALL
+# }
+# aliases['SFweightMuDown'] = {
+#     'expr': 'LepSF2l__mu_'+muWP+'__Do',
+#     'samples': mcALL
+# }
+
+
+
+
+aliases['Top_pTrw'] = {
+  'expr': '(topGenPt * antitopGenPt > 0.) * (TMath::Sqrt(TMath::Exp(0.0615 - 0.0005 * topGenPt) * TMath::Exp(0.0615 - 0.0005 * antitopGenPt))) + (topGenPt * antitopGenPt <= 0.)',
+  'samples': ['top']
+}
+
+
+
+
+
+
+#
+# external defined variable: c++ code
+#
+
+# # 2 leptons only
+# aliases['myVariableMll'] = {
+# #   'external' : "code/mymll.c",
+# #   'variables': ["Lepton_pt[0]", "Lepton_eta[0]", "Lepton_phi[0]", "Lepton_pt[1]", "Lepton_eta[1]", "Lepton_phi[1]"],
+# #   'function' : 'calculate_mass',
+# #   'samples': mcALL
+# # }
+
+
+
+# #
+# # if some variables are not defined but they are needed as inputs of the TMVA, define them!
+# #
+
+# aliases['ptj1'] = {
+#     'expr': 'CleanJet_pt.size() > 0 ? CleanJet_pt[0] : -9999.',
+#     'samples' : ALL
+# }
+
+aliases['njet'] = {
+    'expr': 'Sum(CleanJet_pt>30)',
+    'samples' : ALL
+}
+
+# aliases['myVariableBDT'] = {
+#   'variables': ["pt1", "ptj1", "mll", "njet"],
+#   'function' : 'TMVA',
+#   'xmlfile'  : 'code/TMVAClassification_BDTG.weights.xml',
+#   'samples': ALL
+# }
+
