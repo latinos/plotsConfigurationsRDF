@@ -22,7 +22,7 @@ supercut = (
 # # ------------------------------------------------
 # # FR QCD Enriched Region
 # # bVeto, MET < 30, mtw1 < 20
-# # ortogonale alla DY CR (escluso picco Z OS SF)
+# # orthogonal to the DY CR (OS SF Z peak excluded)
 # # ------------------------------------------------
 # cuts['FR_QCD_CR'] = {
 #     'expr': (
@@ -43,7 +43,7 @@ supercut = (
 # # ------------------------------------------------
 # # FR DY CR
 # # bVeto, MET < 30, mtw1 < 20
-# # esattamente 2 leptoni OS SF nel picco Z
+# # exactly 2 OS SF leptons in the Z peak
 # # ------------------------------------------------
 # cuts['FR_DY_CR'] = {
 #     'expr': (

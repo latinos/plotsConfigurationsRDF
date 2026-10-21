@@ -10,11 +10,11 @@ variable = sys.argv[2] if len(sys.argv) > 2 else "events"
 
 REGIONS = ["WW_SR", "nonprompt_CR", "WZ_SR", "WZb_CR"]
 SCALE = 170.0 / 110.0      # = 1 / (307/170)
-SCALE_DATA = True          # scala anche i dati
-DATA_NAMES = ["DATA"]      # nome/i del sample dei dati nel file
+SCALE_DATA = True          # scale also the data
+DATA_NAMES = ["DATA"]      # name(s) of the data sample in the file
 
 # ---------------------------------------------------------------------------
-# Valori di riferimento (tabella del draft): {processo: {regione: (val, err)}}
+# Reference values (table of the draft): {process: {region: (val, err)}}
 # ---------------------------------------------------------------------------
 REF = {
     "EW WW":       {"WW_SR": (260.8, 20.3), "nonprompt_CR": (90.1, 7.5)},
@@ -30,22 +30,22 @@ REF = {
     "Higgs":       {"WZ_SR": (2.7, 1.7),    "WZb_CR": (1.4, 0.3)},
     "Total SM":    {"WW_SR": (541.1, 23.3), "nonprompt_CR": (636.4, 25.2), "WZ_SR": (513.6, 22.7), "WZb_CR": (125.4, 11.2)},
     "Data":        {"WW_SR": (575, 0),      "nonprompt_CR": (634, 0),     "WZ_SR": (554, 0),      "WZb_CR": (137, 0)},
-    # somma EW WW + QCD WW (il sample VBS_SSWW le contiene entrambe)
+    # sum EW WW + QCD WW (the VBS_SSWW sample contains both)
     "EW+QCD WW":   {"WW_SR": (286.0, 20.9), "nonprompt_CR": (107.6, 8.3)},
 }
 
 # ---------------------------------------------------------------------------
-# Quali sample del file (nome dopo "histo_") compongono ogni processo della tabella.
-# I polarizzati VBS_SSWW_WWCM_* sono esclusi apposta (gia' contenuti in VBS_SSWW).
+# Which samples of the file (name after "histo_") make each process of the table.
+# The polarized VBS_SSWW_WWCM_* are excluded on purpose (already included in VBS_SSWW).
 # ---------------------------------------------------------------------------
 MAP = {
     "EW+QCD WW":  ["WW_EWK", "WW_QCD", "WW_Int"],
-    "EW WZ":      ["WZJJ_EWK", "WZSJJ_EWK"],                      # manca
+    "EW WZ":      ["WZJJ_EWK", "WZSJJ_EWK"],                      # missing
     "QCD WZ":     ["WZJJ_QCD", "WZSJJ_QCD"],
     "ZZ":         ["ZZ"],
     "Nonprompt":  ["Fake"],
     "VVV":        ["VVV"],
-    "tVx":        ["tVx"],                      # manca
+    "tVx":        ["tVx"],                      # missing
     "Wgamma":     ["Wg", "WgS", "Zg", "ZgS"],
     "Wrong-sign": ["DY", "top", "ggWW", "OSWW"],
     "Higgs":      ["ggH_hww", "qqH_hww", "higgs"],
@@ -53,10 +53,10 @@ MAP = {
 
 
 def read_region(f, region):
-    """Ritorna {sample: (integrale, errore)} per region/variable (solo nominali)."""
+    """Return {sample: (integral, error)} for region/variable (only nominal)."""
     d = f.Get(f"{region}/{variable}")
     if not d:
-        print(f"ATTENZIONE: {region}/{variable} non trovata")
+        print(f"WARNING: {region}/{variable} not found")
         return {}
     out = {}
     for key in d.GetListOfKeys():
@@ -65,7 +65,7 @@ def read_region(f, region):
             continue
         name = obj.GetName()
         if name.endswith("Up") or name.endswith("Down"):
-            continue  # variazioni sistematiche
+            continue  # systematic variations
         sample = name[len("histo_"):] if name.startswith("histo_") else name
         err = ctypes.c_double(0.0)
         val = obj.IntegralAndError(1, obj.GetNbinsX(), err)
@@ -80,16 +80,16 @@ def qsum(items):
 
 f = ROOT.TFile.Open(fname)
 if not f or f.IsZombie():
-    sys.exit(f"Impossibile aprire {fname}")
+    sys.exit(f"Cannot open {fname}")
 
 data = {r: read_region(f, r) for r in REGIONS}
 f.Close()
 
-# ---- 1) tutti gli istogrammi trovati, per regione --------------------------
+# ---- 1) all the histograms found, per region ------------------------------
 samples = sorted({s for r in REGIONS for s in data[r]})
 w = max([len("Sample")] + [len(s) for s in samples])
 cw = 20
-print("\n=== Integrali dal file (tutto x 170/307) ===\n")
+print("\n=== Integrals from the file (everything x 170/307) ===\n")
 print(f"{'Sample':<{w}}" + "".join(f"{r:>{cw}}" for r in REGIONS))
 print("-" * (w + cw * len(REGIONS)))
 for s in samples:
@@ -98,7 +98,7 @@ for s in samples:
         row += f"{(f'{data[r][s][0]:.1f} +- {data[r][s][1]:.1f}' if s in data[r] else '---'):>{cw}}"
     print(row)
 
-# ---- 2) confronto con la tabella -------------------------------------------
+# ---- 2) comparison with the table -----------------------------------------
 mine = {}
 for proc, sl in MAP.items():
     mine[proc] = {}
@@ -110,15 +110,15 @@ for proc, sl in MAP.items():
 mapped = {s for sl in MAP.values() for s in sl}
 unmapped = [s for s in samples if s not in mapped and s not in DATA_NAMES]
 if unmapped:
-    print(f"\nATTENZIONE: sample non assegnati a nessun processo (esclusi dal Total SM): {unmapped}")
+    print(f"\nWARNING: samples not assigned to any process (excluded from Total SM): {unmapped}")
 
 mine["Total SM"] = {r: qsum([data[r][s] for s in data[r] if s in mapped]) for r in REGIONS}
 mine["Data"] = {r: qsum([data[r][s] for s in DATA_NAMES if s in data[r]]) for r in REGIONS}
 
-print("\n=== Confronto: file / tabella (rapporto) ===\n")
+print("\n=== Comparison: file / table (ratio) ===\n")
 pw = max(len(p) for p in REF)
 cw = 32
-print(f"{'Processo':<{pw}}" + "".join(f"{r:>{cw}}" for r in REGIONS))
+print(f"{'Process':<{pw}}" + "".join(f"{r:>{cw}}" for r in REGIONS))
 print("-" * (pw + cw * len(REGIONS)))
 for proc in REF:
     row = f"{proc:<{pw}}"

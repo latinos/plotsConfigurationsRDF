@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Scala gli istogrammi MC di un file mkShapes.
+Scale the MC histograms of a mkShapes file.
 
-Non usa UPDATE: legge il file (copiato in locale) e scrive un file NUOVO in
-tmpdir con gli istogrammi MC scalati, poi sovrascrive l'originale.
-Scrivere da zero e' lineare; l'overwrite in UPDATE e' quadratico nel numero
-di chiavi (ogni delete aggiorna la lista dei segmenti liberi).
+It does not use UPDATE: it reads the file (copied locally) and writes a NEW file in
+tmpdir with the scaled MC histograms, then it overwrites the original one.
+Writing from scratch is linear; overwriting in UPDATE is quadratic in the number
+of keys (each delete updates the list of free segments).
 
-Esempio:
+Example:
   python3 scale_mc.py ../2024/rootFile/WW_260923_test24/mkShapes__WW_260923_test24.root 2.5
 """
 import argparse
@@ -21,24 +21,24 @@ import time
 import ROOT
 
 ROOT.gROOT.SetBatch(True)
-ROOT.TH1.AddDirectory(False)   # niente oggetti agganciati alle directory in memoria
+ROOT.TH1.AddDirectory(False)   # no objects attached to the directories in memory
 
 MARKER = "mc_rescaled_factor"
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--file", help="file root di origine (anche su /eos)")
-parser.add_argument("--factor", type=float, help="fattore di scala per il MC")
+parser.add_argument("--file", help="input root file (also on /eos)")
+parser.add_argument("--factor", type=float, help="scale factor for the MC")
 parser.add_argument("--tmpdir", default="/tmp/abulla")
 parser.add_argument("--skip", nargs="+", default=["DATA", "Fake"],
-                    help="campioni da NON scalare (match esatto o prefisso + '_')")
+                    help="samples NOT to be scaled (exact match or prefix + '_')")
 parser.add_argument("--keep-backup", action="store_true",
-                    help="conserva in tmpdir la copia originale non scalata")
+                    help="keep in tmpdir the original not scaled copy")
 parser.add_argument("--xrdcp", action="store_true",
-                    help="copia con xrdcp invece che via mount (spesso molto piu' veloce su EOS)")
+                    help="copy with xrdcp instead of via mount (often much faster on EOS)")
 parser.add_argument("--log-every", type=int, default=2000,
-                    help="stampa il progresso ogni N istogrammi")
+                    help="print the progress every N histograms")
 parser.add_argument("--dry-run", action="store_true",
-                    help="fa tutto in locale ma NON sovrascrive l'originale")
+                    help="do everything locally but do NOT overwrite the original")
 args = parser.parse_args()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(message)s", datefmt="%H:%M:%S")
@@ -81,18 +81,18 @@ local_out = os.path.join(args.tmpdir, base)
 
 T0 = time.time()
 
-# 1) copia locale dell'originale
-log.info(f"[1/4] Copio in locale: {src}")
-copy(src, local_in, "      copia EOS -> tmp")
+# 1) local copy of the original
+log.info(f"[1/4] Copying locally: {src}")
+copy(src, local_in, "      copy EOS -> tmp")
 
-# 2) scrivo un file nuovo con il MC scalato
+# 2) write a new file with the scaled MC
 fin = ROOT.TFile.Open(local_in, "READ")
 if not fin or fin.IsZombie():
-    sys.exit(f"Impossibile aprire {local_in}")
+    sys.exit(f"Cannot open {local_in}")
 if fin.Get(MARKER):
     prev = fin.Get(MARKER).GetTitle()
     fin.Close()
-    sys.exit(f"ERRORE: file gia' scalato (fattore {prev}). Non faccio nulla.")
+    sys.exit(f"ERROR: file already scaled (factor {prev}). Nothing done.")
 
 fout = ROOT.TFile.Open(local_out, "RECREATE")
 fout.SetCompressionSettings(fin.GetCompressionSettings())
@@ -113,7 +113,7 @@ def progress():
     if n and n % args.log_every == 0:
         now = time.time()
         rate = args.log_every / max(now - t_last, 1e-6)
-        log.info(f"      {n} istogrammi processati  ({rate:.0f} histo/s, "
+        log.info(f"      {n} histograms processed  ({rate:.0f} histo/s, "
                  f"{stats['dirs']} directory, {now - t_scan:.1f} s)")
         t_last = now
 
@@ -121,11 +121,11 @@ def progress():
 def process(din, dout):
     stats["dirs"] += 1
     seen = set()
-    # lista statica delle chiavi: niente modifiche alla lista durante l'iterazione
+    # static list of the keys: no changes to the list during the iteration
     keys = list(din.GetListOfKeys())
     for key in keys:
         name = key.GetName()
-        if name in seen:          # tiene solo il cycle piu' alto (il primo in lista)
+        if name in seen:          # keep only the highest cycle (the first in the list)
             continue
         seen.add(name)
 
@@ -158,33 +158,33 @@ def process(din, dout):
             stats["other"] += 1
 
 
-log.info(f"[2/4] Scalo il MC di un fattore {args.factor} e scrivo {local_out}")
+log.info(f"[2/4] Scaling the MC by a factor {args.factor} and writing {local_out}")
 process(fin, fout)
 fout.cd()
 ROOT.TNamed(MARKER, str(args.factor)).Write()
 fout.Close()
 fin.Close()
 
-log.info(f"      scalati: {stats['scaled']}, saltati: {stats['skipped']}, "
-         f"altri oggetti: {stats['other']}, directory: {stats['dirs']}")
-log.info(f"      prefissi saltati: {sorted(skipped_prefixes)}")
-log.info(f"      scansione completata in {time.time() - t_scan:.1f} s "
+log.info(f"      scaled: {stats['scaled']}, skipped: {stats['skipped']}, "
+         f"other objects: {stats['other']}, directories: {stats['dirs']}")
+log.info(f"      skipped prefixes: {sorted(skipped_prefixes)}")
+log.info(f"      scan completed in {time.time() - t_scan:.1f} s "
          f"(in: {human(os.path.getsize(local_in))}, out: {human(os.path.getsize(local_out))})")
 
-# 3) sovrascrivo l'originale
+# 3) overwrite the original
 if args.dry_run:
-    log.info("[3/4] --dry-run: NON sovrascrivo l'originale. Output in " + local_out)
+    log.info("[3/4] --dry-run: the original is NOT overwritten. Output in " + local_out)
 else:
-    log.info(f"[3/4] Sovrascrivo {src}")
-    copy(local_out, src, "      copia tmp -> EOS")
+    log.info(f"[3/4] Overwriting {src}")
+    copy(local_out, src, "      copy tmp -> EOS")
     if os.path.getsize(local_out) != os.path.getsize(src):
-        sys.exit("ERRORE: dimensione su origine diversa da quella locale!")
+        sys.exit("ERROR: size of the original different from the local one!")
     os.remove(local_out)
 
-# 4) pulizia
+# 4) cleanup
 if not args.keep_backup and not args.dry_run:
     os.remove(local_in)
 else:
-    log.info(f"      originale non scalato conservato in {local_in}")
+    log.info(f"      original not scaled file kept in {local_in}")
 
-log.info(f"[4/4] Fatto in {time.time() - T0:.1f} s totali.")
+log.info(f"[4/4] Done in {time.time() - T0:.1f} s in total.")
