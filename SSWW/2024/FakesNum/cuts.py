@@ -7,7 +7,7 @@
 supercut = (
     '  Lepton_pt.size() > 1'
     ' && Lepton_pt.size() < 5'
-    ' && ROOT::VecOps::All(Lepton_pt > 10.f)'  # all leptons > 10 GeV
+    ' && ROOT::VecOps::All(Lepton_pt > 10.f)'  # tutti i leptoni > 10 GeV
     ' && (Lepton_pt.size() > 0 ? Lepton_pt[0] : -99) > 25'
     ' && (Lepton_pt.size() > 1 ? Lepton_pt[1] : -99) > 10'
     ' && CleanJet_pt.size() > 1'

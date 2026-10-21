@@ -1,20 +1,20 @@
 # snapshot.py
 
 # -------------------------------------------------------------------
-# Where to save the produced TTrees
+# Dove salvare i TTree prodotti
 # -------------------------------------------------------------------
 # folder_where_to_save_trees = '../rootFile/' + '260914_Fakes' + '/snapshot/'
 
 # -------------------------------------------------------------------
-# Cut applied before the snapshot
+# Taglio applicato prima dello snapshot
 # -------------------------------------------------------------------
 cut_to_dump = 'ALL'
 
 # -------------------------------------------------------------------
-# Branches to save
+# Branch da salvare
 # -------------------------------------------------------------------
 
-# Base weights
+# Pesi base
 _weights = [
     'XSWeight',
     'SFweight2l',
@@ -23,7 +23,7 @@ _weights = [
     'fakeW',
 ]
 
-# Lepton kinematics
+# Cinematica leptoni
 _leptons = [
     'Lepton_pt',
     'Lepton_eta',
@@ -36,7 +36,7 @@ _leptons = [
     'Lepton_rochesterSF',
 ]
 
-# Tight WP booleans for electrons
+# Tight WP boolean per elettroni
 _tight_ele = [
     'Lepton_isTightElectron_mvaWinter22V2Iso_WP90',
     'Lepton_isTightElectron_mvaWinter22V2Iso_WP90_tthMVA_HWW',
@@ -47,7 +47,7 @@ _tight_ele = [
     'Lepton_isTightElectron_testrecipes',
 ]
 
-# Tight WP booleans for muons
+# Tight WP boolean per muoni
 _tight_mu = [
     'Lepton_isTightMuon_cut_Tight_HWW',
     'Lepton_isTightMuon_cut_TightID_pfIsoTight_HWW_tthmva_67',
@@ -68,7 +68,7 @@ _triggers = [
     'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ',
 ]
 
-# Selection variables
+# Variabili di selezione
 _selection = [
     'PuppiMET_pt',
     'PuppiMET_phi',
@@ -87,7 +87,7 @@ _jets = [
     'CleanJet_jetIdx',
     'Jet_btagUParTAK4B',
 ]
-# High level VBS variables
+# Variabili VBS di alto livello
 _vbs = [
     'mjj',
     'detajj',
@@ -96,7 +96,7 @@ _vbs = [
     'dphill',
 ]
 
-# Hadronic activity and vertices
+# Attività adronica e vertici
 _event = [
     'PV_npvsGood',
     'run',
@@ -104,20 +104,20 @@ _event = [
     'event',
 ]
 
-# Region flags
+# Flag di regione
 _regions = [
     'isFR_QCD_CR',
     'isFR_DY_CR',
     'isFR_top_CR',
 ]
 
-# Gen matching (for closure test)
+# Gen matching (per closure test)
 _gen = [
     'Lepton_genmatched',
     'Lepton_promptgenmatched',
 ]
 
-# merge everything
+# merge di tutto
 variables_to_dump = (
     _weights
     + _leptons

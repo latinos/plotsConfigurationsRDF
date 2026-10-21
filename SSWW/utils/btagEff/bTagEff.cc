@@ -19,7 +19,7 @@ struct dataset {
     std::map<std::string, std::map<std::string, double>> algo;
 };
 
-// Keep the samples definition as it is
+// Manteniamo la tua definizione dei samples così com’è
 dataset mkDataset(int year) {
     TH1::SetDefaultSumw2(true);
     dataset d;

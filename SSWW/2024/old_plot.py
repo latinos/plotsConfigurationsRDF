@@ -13,8 +13,8 @@ palette2 = {
     "Yellow"     : (234, 180, 100),  # SSWW signal
     "DeadViolet" : ( 95,  94, 149),  # Nonprompt
     "Red"        : (198,  60,  85),  # WZ
-    "RedDark"  : (180,  35,  55),  # dark cold red — close to Red but deeper
-    "RedWarm"  : (230,  80,  40),  # warm red-orange — clearly distinguishable
+    "RedDark"  : (180,  35,  55),  # rosso scuro, freddo — vicino al tuo Red ma più profondo
+    "RedWarm"  : (230,  80,  40),  # rosso-arancio caldo — si distingue nettamente
     "GreenPure"  : (  0, 140,  60),  # Vgamma
     "Swamp"      : ( 53,  91,  56),  # VVV
     "lightAzure" : (100, 180, 240),  # ZZ
@@ -23,9 +23,9 @@ palette2 = {
     "Teal"       : ( 38, 180, 160),  # ggWW
     "Salmon"     : (220, 100,  80),  # VgS
     "Pink"       : (220, 150, 200),  # Higgs
-    "SigLL" : (120, 160, 230),  # light blue
-    "SigTL" : ( 80, 110, 200),  # medium blue  
-    "SigTT" : ( 50,  60, 170),  # dark blue
+    "SigLL" : (120, 160, 230),  # blu chiaro
+    "SigTL" : ( 80, 110, 200),  # blu medio  
+    "SigTT" : ( 50,  60, 170),  # blu scuro
 }
 
 

@@ -51,8 +51,8 @@ print(treeBaseDir)
 # 2022: 34.75 fb⁻¹ (±1.4%)
 # 2023: 28.40 fb⁻¹ (±1.3%)
 # 2024: 110.11 fb⁻¹ (±1.6%)
-# 2025: 125.07 fb⁻¹ (±5%) — preliminary
-# 2026: no uncertainty available yet
+# 2025: 125.07 fb⁻¹ (±5%) — preliminare
+# 2026: nessuna incertezza disponibile ancora
 
 
 # nuisances['lumi_1'] = {
