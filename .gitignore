@@ -216,3 +216,5 @@ Makefile
 
 # Except ROOT files in utils/
 !SSWW/utils/**/*.root
+# generated cache of the number of events per file (latinoRDF)
+Hgg/**/samples_metadata.json
